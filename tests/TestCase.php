@@ -18,6 +18,7 @@ abstract class TestCase extends Orchestra
     {
         $app['config']->set('app.name', 'Laravel');
         $app['config']->set('app.url', 'https://example.com');
+        $app['config']->set('app.key', 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=');
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
             'driver' => 'sqlite',
