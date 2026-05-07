@@ -6,13 +6,13 @@ use Illuminate\Console\Command;
 
 class LazySeoCommand extends Command
 {
-    public $signature = 'lazy-seo';
+    public $signature = 'lazy-seo:about';
 
-    public $description = 'My command';
+    public $description = 'Show Lazy SEO Tools package information.';
 
     public function handle(): int
     {
-        $this->comment('All done');
+        $this->components->info('Lazy SEO Tools is installed.');
 
         return self::SUCCESS;
     }

@@ -7,19 +7,24 @@ use Step2dev\LazySeoTools\Models\Seo;
 
 class SeoForm extends Component
 {
-    public $title;
+    public ?string $url = null;
+    public ?string $title = null;
+    public ?string $description = null;
+    public ?string $keywords = null;
 
-    public $description;
-
-    public $keywords;
-
-    public function save()
+    public function save(): void
     {
+        $locale = app()->getLocale();
+
         Seo::create([
-            'title' => $this->title,
-            'description' => $this->description,
-            'keywords' => $this->keywords,
+            'url' => $this->url,
+            'title' => [$locale => $this->title],
+            'description' => [$locale => $this->description],
+            'keywords' => [$locale => $this->keywords],
+            'indexable' => true,
         ]);
+
+        $this->reset(['url', 'title', 'description', 'keywords']);
     }
 
     public function render()

@@ -2,4 +2,9 @@
 
 namespace Step2dev\LazySeoTools;
 
-class LazySeo {}
+use Step2dev\LazySeoTools\Services\SeoManager;
+
+class LazySeo extends SeoManager
+{
+    // Backward-compatible class for older consumers resolving Step2dev\LazySeoTools\LazySeo directly.
+}

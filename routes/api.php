@@ -2,11 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 use Step2dev\LazySeoTools\Http\Controllers\Api\SeoApiController;
+use Step2dev\LazySeoTools\Http\Middleware\ForceHeadless;
 
-Route::prefix('seo')->group(function () {
-    Route::get('/', [SeoApiController::class, 'index']);
-    Route::get('/{id}', [SeoApiController::class, 'show']);
-    Route::post('/', [SeoApiController::class, 'store']);
-    Route::put('/{id}', [SeoApiController::class, 'update']);
-    Route::delete('/{id}', [SeoApiController::class, 'destroy']);
-});
+if (config('lazy-seo.routes.api', false)) {
+    Route::middleware(['api', ForceHeadless::class])
+        ->prefix(config('lazy-seo.routes.api_prefix', 'seo'))
+        ->name('lazy-seo.api.')
+        ->group(function () {
+            Route::get('/', [SeoApiController::class, 'index'])->name('index');
+            Route::get('/{seo}', [SeoApiController::class, 'show'])->name('show');
+            Route::post('/', [SeoApiController::class, 'store'])->name('store');
+            Route::put('/{seo}', [SeoApiController::class, 'update'])->name('update');
+            Route::delete('/{seo}', [SeoApiController::class, 'destroy'])->name('destroy');
+        });
+}

@@ -6,15 +6,12 @@ use Illuminate\View\Component;
 
 class TitleComponent extends Component
 {
-    public $title;
-
-    public function __construct($title = null)
-    {
-        $this->title = $title ?? config('app.name');
-    }
+    public function __construct(public ?string $title = null) {}
 
     public function render()
     {
-        return view('lazy-seo::components.title');
+        return view('lazy-seo::components.title', [
+            'title' => $this->title ?? config('lazy-seo.defaults.title', config('app.name')),
+        ]);
     }
 }

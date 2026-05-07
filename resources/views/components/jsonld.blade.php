@@ -1,1 +1,1 @@
-<!-- JSON-LD output -->
+{!! $jsonLd !!}

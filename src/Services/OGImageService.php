@@ -3,25 +3,33 @@
 namespace Step2dev\LazySeoTools\Services;
 
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManagerStatic as Image;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 class OGImageService
 {
     public function generate(string $title, ?string $path = null): string
     {
-        $img = Image::canvas(1200, 630, '#f9fafb');
-        $img->text($title, 100, 315, function ($font) {
-            $font->file(__DIR__.'/../../resources/fonts/OpenSans-Bold.ttf');
+        $manager = new ImageManager(new Driver);
+        $width = (int) config('lazy-seo.og_image.width', 1200);
+        $height = (int) config('lazy-seo.og_image.height', 630);
+        $disk = config('lazy-seo.og_image.disk', 'public');
+        $directory = trim(config('lazy-seo.og_image.directory', 'og'), '/');
+
+        $image = $manager->create($width, $height)->fill('#f9fafb');
+
+        // Keep this dependency-free. Consumers can override this service for custom fonts/templates.
+        $image->text($title, 80, (int) ($height / 2), function ($font) {
             $font->size(48);
             $font->color('#111827');
             $font->align('left');
-            $font->valign('center');
+            $font->valign('middle');
         });
 
-        $path ??= 'og/'.md5($title).'.png';
+        $path ??= $directory.'/'.md5($title).'.png';
 
-        Storage::disk('public')->put($path, (string) $img->encode('png'));
+        Storage::disk($disk)->put($path, (string) $image->toPng());
 
-        return Storage::url($path);
+        return Storage::disk($disk)->url($path);
     }
 }

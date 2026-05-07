@@ -10,13 +10,17 @@ return new class extends Migration
     {
         Schema::create('seo', function (Blueprint $table) {
             $table->id();
-            $table->string('title')->nullable();
-            $table->text('description')->nullable();
-            $table->text('keywords')->nullable();
+            $table->string('url')->nullable()->index();
+            $table->json('title')->nullable();
+            $table->json('description')->nullable();
+            $table->json('keywords')->nullable();
             $table->string('canonical_url')->nullable();
-            $table->boolean('indexable')->default(true);
-            $table->morphs('seoable');
+            $table->json('robots')->nullable();
+            $table->boolean('indexable')->default(true)->index();
+            $table->nullableMorphs('seoable');
             $table->timestamps();
+
+            $table->unique(['seoable_type', 'seoable_id'], 'seo_unique_seoable');
         });
     }
 

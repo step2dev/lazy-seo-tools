@@ -2,35 +2,30 @@
 
 namespace Step2dev\LazySeoTools\Tests;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Step2dev\LazySeo\LazySeoServiceProvider;
+use Step2dev\LazySeoTools\LazySeoServiceProvider;
 
 class TestCase extends Orchestra
 {
-    protected function setUp(): void
+    protected function getPackageProviders($app): array
     {
-        parent::setUp();
-
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Step2dev\\LazySeo\\Database\\Factories\\'.class_basename($modelName).'Factory'
-        );
+        return [LazySeoServiceProvider::class];
     }
 
-    protected function getPackageProviders($app)
+    protected function defineEnvironment($app): void
     {
-        return [
-            LazySeoServiceProvider::class,
-        ];
+        $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
+        $app['config']->set('database.default', 'testing');
+        $app['config']->set('database.connections.testing', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
+        $app['config']->set('app.url', 'https://example.com');
     }
 
-    public function getEnvironmentSetUp($app)
+    protected function defineDatabaseMigrations(): void
     {
-        config()->set('database.default', 'testing');
-
-        /*
-        $migration = include __DIR__.'/../database/migrations/create_lazy-seo_table.php.stub';
-        $migration->up();
-        */
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 }

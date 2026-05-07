@@ -9,15 +9,10 @@ class SeoService
 {
     public function createOrUpdateSeo(Model $model, array $seoData): Seo
     {
-        $model->seo()->updateOrCreate(
-            [
-                'seoable_id' => $model->id,
-                'seoable_type' => get_class($model),
-            ],
-            $seoData
-        );
+        /** @var Seo $seo */
+        $seo = $model->seo()->updateOrCreate([], $seoData);
 
-        return $this->getSeo($model);
+        return $seo;
     }
 
     public function getSeo(Model $model): Seo
