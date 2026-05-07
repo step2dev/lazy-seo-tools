@@ -251,3 +251,39 @@ seo_jsonld('faq', [
     ],
 ]);
 ```
+
+## Site Crawler / SEO Scanner
+
+```bash
+php artisan lazy-seo:crawl https://example.com --max-pages=100 --output=storage/app/seo-report.json
+```
+
+Programmatic usage:
+
+```php
+use Step2dev\LazySeoTools\Services\SiteCrawlerService;
+
+$result = app(SiteCrawlerService::class)->crawl('https://example.com', [
+    'max_pages' => 100,
+]);
+
+$result->score();
+$result->brokenLinks;
+$result->duplicateTitles;
+$result->canonicalConflicts;
+```
+
+Crawler config:
+
+```php
+'crawler' => [
+    'enabled' => env('LAZY_SEO_CRAWLER_ENABLED', true),
+    'max_pages' => (int) env('LAZY_SEO_CRAWLER_MAX_PAGES', 50),
+    'timeout' => (int) env('LAZY_SEO_CRAWLER_TIMEOUT', 10),
+    'user_agent' => env('LAZY_SEO_CRAWLER_USER_AGENT', 'LazySeoBot/1.0'),
+    'respect_noindex' => env('LAZY_SEO_CRAWLER_RESPECT_NOINDEX', false),
+    'exclude' => ['admin/*', 'nova/*', 'horizon/*', 'telescope/*'],
+],
+```
+
+Table names are still configured directly in `config/lazy-seo.php` and do not use `env()`.

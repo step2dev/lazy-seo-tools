@@ -34,3 +34,13 @@
 - `SeoManager` now keeps predictable priority: config defaults → URL SEO → model SEO → template/fluent/manual overrides.
 - `HasSeo` now exposes `resolvedSeo()` returning `SeoData` while keeping `seoData()` array compatibility.
 - Table names stay configurable only through published config values, without `env()`.
+
+## v9 - Crawler / Site Scanner
+
+- Added `SiteCrawlerService` for internal site crawling.
+- Added `CrawlResult` and `CrawledPage` DTOs.
+- Added URL normalization service.
+- Added broken links, duplicate titles/descriptions, canonical conflicts, orphan pages and redirect-chain detection.
+- Added `lazy-seo:crawl` command with optional JSON report output.
+- Added crawler config without changing SEO table config behavior.
+- Added crawler tests with HTTP fakes.

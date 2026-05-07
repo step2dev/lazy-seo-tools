@@ -105,5 +105,21 @@ return [
         ],
     ],
 
+    'crawler' => [
+        'enabled' => env('LAZY_SEO_CRAWLER_ENABLED', true),
+        'max_pages' => (int) env('LAZY_SEO_CRAWLER_MAX_PAGES', 50),
+        'timeout' => (int) env('LAZY_SEO_CRAWLER_TIMEOUT', 10),
+        'user_agent' => env('LAZY_SEO_CRAWLER_USER_AGENT', 'LazySeoBot/1.0'),
+        'respect_noindex' => env('LAZY_SEO_CRAWLER_RESPECT_NOINDEX', false),
+        'exclude' => [
+            'admin/*',
+            'nova/*',
+            'horizon/*',
+            'telescope/*',
+            'login',
+            'logout',
+        ],
+    ],
+
     'ai_token' => env('LAZY_SEO_AI_TOKEN'),
 ];

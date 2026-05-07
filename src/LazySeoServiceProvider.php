@@ -10,6 +10,7 @@ use Step2dev\LazySeoTools\Commands\ExportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\GenerateSitemapCommand;
 use Step2dev\LazySeoTools\Commands\ImportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\LazySeoCommand;
+use Step2dev\LazySeoTools\Commands\CrawlSiteCommand;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
 use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
@@ -23,6 +24,8 @@ use Step2dev\LazySeoTools\Services\SchemaService;
 use Step2dev\LazySeoTools\Services\RedirectImportExportService;
 use Step2dev\LazySeoTools\Services\SeoManager;
 use Step2dev\LazySeoTools\Services\SitemapGeneratorService;
+use Step2dev\LazySeoTools\Services\SiteCrawlerService;
+use Step2dev\LazySeoTools\Services\UrlNormalizer;
 use Step2dev\LazySeoTools\View\Components\JsonLdComponent;
 use Step2dev\LazySeoTools\View\Components\MetaComponent;
 use Step2dev\LazySeoTools\View\Components\OgComponent;
@@ -46,6 +49,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
                 GenerateSitemapCommand::class,
                 ImportRedirectsCommand::class,
                 ExportRedirectsCommand::class,
+                CrawlSiteCommand::class,
             ]);
     }
 
@@ -57,6 +61,8 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->app->alias(SeoManager::class, 'lazy-seo-manager');
 
         $this->app->singleton(SitemapGeneratorService::class);
+        $this->app->singleton(UrlNormalizer::class);
+        $this->app->singleton(SiteCrawlerService::class);
         $this->app->singleton(RedirectImportExportService::class);
         $this->app->singleton(SeoAnalyzerService::class);
         $this->app->singleton(SchemaService::class);
