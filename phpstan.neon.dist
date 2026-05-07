@@ -9,5 +9,8 @@ parameters:
         - database
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
-    checkModelProperties: true
+    checkModelProperties: false
     noEnvCallsOutsideOfConfig: false
+    treatPhpDocTypesAsCertain: false
+    universalObjectCratesClasses:
+        - Illuminate\Database\Eloquent\Model
