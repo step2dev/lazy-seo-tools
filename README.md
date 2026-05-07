@@ -179,3 +179,75 @@ old-page,/new-page,301,1,0
 #^old/(post-[0-9]+)$#,/new/$1,301,1,1
 ```
 
+
+## Analyzer v1
+
+```php
+use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
+
+$result = app(SeoAnalyzerService::class)->analyzePage([
+    'title' => 'Laravel SEO Tools',
+    'description' => 'Production SEO toolkit for Laravel applications.',
+    'canonical_url' => 'https://example.com/page',
+    'robots' => ['index', 'follow'],
+    'image' => 'https://example.com/og.jpg',
+    'html' => $html,
+]);
+
+$result->score;
+$result->grade();
+$result->toArray();
+```
+
+Analyzer checks:
+
+- title and meta description length;
+- canonical URL;
+- robots directives;
+- content length;
+- H1/H2 structure;
+- missing image alt attributes;
+- internal/external links;
+- OpenGraph/Twitter readiness;
+- JSON-LD presence.
+
+## Schema.org / JSON-LD
+
+```blade
+<x-lazy-seo-jsonld type="article" :data="[
+    'title' => $post->title,
+    'description' => $post->excerpt,
+    'image' => $post->cover_url,
+    'author' => $post->author->name,
+    'url' => route('posts.show', $post),
+]" />
+```
+
+Supported schema types:
+
+- `webPage`
+- `article`
+- `blogPosting`
+- `product`
+- `organization`
+- `localBusiness`
+- `webSite`
+- `breadcrumbs`
+- `faq`
+
+Programmatic usage:
+
+```php
+seo_schema('breadcrumbs', [
+    'items' => [
+        ['name' => 'Home', 'url' => url('/')],
+        ['name' => 'Blog', 'url' => route('blog.index')],
+    ],
+]);
+
+seo_jsonld('faq', [
+    'items' => [
+        ['question' => 'What is Lazy SEO?', 'answer' => 'Laravel SEO toolkit.'],
+    ],
+]);
+```

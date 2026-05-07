@@ -94,5 +94,16 @@ return [
         'seo.deleted' => env('LAZY_SEO_WEBHOOK_DELETED'),
     ],
 
+
+    'schema' => [
+        'organization' => [
+            'logo' => env('LAZY_SEO_ORGANIZATION_LOGO'),
+            'same_as' => [],
+        ],
+        'website' => [
+            'search_url' => env('LAZY_SEO_SEARCH_URL'),
+        ],
+    ],
+
     'ai_token' => env('LAZY_SEO_AI_TOKEN'),
 ];

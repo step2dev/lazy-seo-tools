@@ -10,15 +10,16 @@ use Step2dev\LazySeoTools\Commands\ExportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\GenerateSitemapCommand;
 use Step2dev\LazySeoTools\Commands\ImportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\LazySeoCommand;
-use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
 use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
+use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Services\CanonicalService;
 use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\OGImageService;
 use Step2dev\LazySeoTools\Services\OgMetaService;
 use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
+use Step2dev\LazySeoTools\Services\SchemaService;
 use Step2dev\LazySeoTools\Services\RedirectImportExportService;
 use Step2dev\LazySeoTools\Services\SeoManager;
 use Step2dev\LazySeoTools\Services\SitemapGeneratorService;
@@ -58,6 +59,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->app->singleton(SitemapGeneratorService::class);
         $this->app->singleton(RedirectImportExportService::class);
         $this->app->singleton(SeoAnalyzerService::class);
+        $this->app->singleton(SchemaService::class);
         $this->app->singleton(CanonicalService::class);
         $this->app->singleton(JsonLdService::class);
         $this->app->singleton(OgMetaService::class);
@@ -71,6 +73,9 @@ class LazySeoServiceProvider extends PackageServiceProvider
         Blade::component('lazy-seo-meta', MetaComponent::class);
         Blade::component('lazy-seo-title', TitleComponent::class);
         Blade::component('lazy-seo-jsonld', JsonLdComponent::class);
+        Blade::component('lazy-seo-schema', JsonLdComponent::class);
+        Blade::component('seo::json-ld', JsonLdComponent::class);
+        Blade::component('seo::schema', JsonLdComponent::class);
         Blade::component('lazy-seo-og', OgComponent::class);
         Blade::component('lazy-seo-twitter', TwitterComponent::class);
 

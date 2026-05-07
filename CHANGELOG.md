@@ -1,4 +1,14 @@
 
+## v8 - Analyzer and Schema.org
+
+- Added `SeoAnalysisResult` immutable DTO.
+- Rebuilt `SeoAnalyzerService` with score 0-100, errors, warnings, notices and metrics.
+- Added Schema.org builder service.
+- Added JSON-LD support for Article, BlogPosting, Product, Organization, LocalBusiness, WebSite, BreadcrumbList and FAQPage.
+- Added `seo_schema()` and `seo_jsonld()` helpers.
+- Added Analyzer and Schema tests.
+
+
 ## v7 - Sitemap v2 and Redirects v2
 
 - Added sitemap index generation.

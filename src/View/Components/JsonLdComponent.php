@@ -8,12 +8,15 @@ use Step2dev\LazySeoTools\Services\JsonLdService;
 
 class JsonLdComponent extends Component
 {
-    public function __construct(public array $data = []) {}
+    public function __construct(
+        public string $type = 'webPage',
+        public array $data = [],
+    ) {}
 
     public function render(): View
     {
         return view('lazy-seo::components.jsonld', [
-            'data' => app(JsonLdService::class)->generateForPage($this->data),
+            'schema' => app(JsonLdService::class)->make($this->type, $this->data),
         ]);
     }
 }
