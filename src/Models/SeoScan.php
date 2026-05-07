@@ -79,7 +79,6 @@ class SeoScan extends Model
         return $builder->latest('created_at');
     }
 
-
     public function scopePending(Builder $builder): Builder
     {
         return $builder->where('status', 'pending');
