@@ -229,6 +229,7 @@ class SitemapGeneratorService
         return null;
     }
 
+
     /** @param array<string, mixed> $sourceConfig */
     protected function modelImages(Model $model, array $sourceConfig): ?array
     {
@@ -365,6 +366,7 @@ class SitemapGeneratorService
             .implode(PHP_EOL, $urls).PHP_EOL
             .'</urlset>'.PHP_EOL;
     }
+
 
     /** @param array<int, mixed> $images */
     protected function normalizeImages(array $images): array

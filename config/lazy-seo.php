@@ -145,6 +145,7 @@ return [
         'store_regressions' => env('LAZY_SEO_HISTORY_STORE_REGRESSIONS', true),
     ],
 
+
     'audit' => [
         'severity_weights' => [
             'error' => 8,
@@ -214,6 +215,19 @@ return [
         'chunk_size' => (int) env('LAZY_SEO_INDEXNOW_CHUNK_SIZE', 1000),
         'log' => env('LAZY_SEO_INDEXNOW_LOG', true),
     ],
+
+    'alerts' => [
+        'enabled' => env('LAZY_SEO_ALERTS_ENABLED', false),
+        'score_threshold' => (int) env('LAZY_SEO_ALERT_SCORE_THRESHOLD', 75),
+        'critical_issues_threshold' => (int) env('LAZY_SEO_ALERT_CRITICAL_ISSUES_THRESHOLD', 1),
+        'new_issues_threshold' => (int) env('LAZY_SEO_ALERT_NEW_ISSUES_THRESHOLD', 1),
+        'failed_scans' => env('LAZY_SEO_ALERT_FAILED_SCANS', true),
+        'cooldown_minutes' => (int) env('LAZY_SEO_ALERT_COOLDOWN_MINUTES', 60),
+        'cache_store' => env('LAZY_SEO_ALERT_CACHE_STORE'),
+        'webhook_url' => env('LAZY_SEO_ALERT_WEBHOOK_URL'),
+        'include_issues_limit' => (int) env('LAZY_SEO_ALERT_INCLUDE_ISSUES_LIMIT', 10),
+    ],
+
 
     'content_intelligence' => [
         'enabled' => env('LAZY_SEO_CONTENT_INTELLIGENCE_ENABLED', true),

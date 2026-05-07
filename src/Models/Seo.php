@@ -50,6 +50,7 @@ class Seo extends Model
         'indexable' => 'bool',
     ];
 
+
     protected static function booted(): void
     {
         static::saving(function (Seo $seo): void {
@@ -82,6 +83,7 @@ class Seo extends Model
                 ->orWhereIn('url', $candidates);
         });
     }
+
 
     public static function normalizeUrlForLookup(string $url): string
     {

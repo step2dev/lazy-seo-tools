@@ -36,6 +36,7 @@ class SeoScanIssue extends Model
         return config('lazy-seo.tables.seo_scan_issues', 'seo_scan_issues');
     }
 
+
     public function scopeOpen(Builder $builder): Builder
     {
         return $builder->where('status', 'open');

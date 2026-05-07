@@ -24,25 +24,10 @@ class SeoIssuesTable extends Component
     /** @var array<int, bool> */
     public array $selected = [];
 
-    public function updatingSeverity(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingType(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingStatus(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
+    public function updatingSeverity(): void { $this->resetPage(); }
+    public function updatingType(): void { $this->resetPage(); }
+    public function updatingStatus(): void { $this->resetPage(); }
+    public function updatingSearch(): void { $this->resetPage(); }
 
     public function markSelectedResolved(): void
     {

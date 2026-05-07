@@ -13,6 +13,7 @@ class SeoMonitoringService
         protected SiteCrawlerService $crawler,
         protected SeoHistoryService $history,
         protected SeoAuditService $audit,
+        protected SeoAlertService $alerts,
     ) {}
 
     public function createPendingScan(string $url, array $options = []): SeoScan
@@ -44,6 +45,7 @@ class SeoMonitoringService
             return $this->store($result, $scan->options ?? [], $scan);
         } catch (Throwable $exception) {
             $scan->markFailed($exception->getMessage());
+            $this->alerts->notifyIfNeeded($scan->refresh());
 
             throw $exception;
         }
@@ -99,7 +101,11 @@ class SeoMonitoringService
             'resolved_issues' => $resolved,
         ])->save();
 
-        return $scan->load('issues', 'previousScan');
+        $scan = $scan->load('issues', 'previousScan');
+
+        $this->alerts->notifyIfNeeded($scan);
+
+        return $scan;
     }
 
     /** @return array<int, array<string, mixed>> */
