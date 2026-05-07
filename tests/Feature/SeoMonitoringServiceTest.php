@@ -23,8 +23,8 @@ it('uses configurable monitoring table names without env in table config', funct
     config()->set('lazy-seo.tables.seo_scans', 'custom_seo_scans');
     config()->set('lazy-seo.tables.seo_scan_issues', 'custom_seo_scan_issues');
 
-    $scan = new SeoScan();
-    $issue = new SeoScanIssue();
+    $scan = new SeoScan;
+    $issue = new SeoScanIssue;
 
     expect($scan->getTable())->toBe('custom_seo_scans')
         ->and($issue->getTable())->toBe('custom_seo_scan_issues')

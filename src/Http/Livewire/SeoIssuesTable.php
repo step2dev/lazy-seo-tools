@@ -12,7 +12,9 @@ class SeoIssuesTable extends Component
     use WithPagination;
 
     public ?int $scanId = null;
+
     public string $severity = '';
+
     public string $type = '';
 
     public function updatingSeverity(): void
