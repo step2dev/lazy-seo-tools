@@ -265,7 +265,6 @@ class SiteCrawlerService
         return false;
     }
 
-
     /**
      * @param  array<string, array<int, string>>  $externalCandidates
      * @return array<string, array<string, mixed>>
