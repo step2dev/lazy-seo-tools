@@ -3,6 +3,30 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | Feature flags
+    |--------------------------------------------------------------------------
+    |
+    | Keep the core meta API enabled for the simplest installation path, and
+    | disable heavier modules when an application does not need them.
+    |
+    */
+    'features' => [
+        'meta' => env('LAZY_SEO_FEATURE_META', true),
+        'schema' => env('LAZY_SEO_FEATURE_SCHEMA', true),
+        'redirects' => env('LAZY_SEO_FEATURE_REDIRECTS', true),
+        'sitemap' => env('LAZY_SEO_FEATURE_SITEMAP', true),
+        'crawler' => env('LAZY_SEO_FEATURE_CRAWLER', true),
+        'monitoring' => env('LAZY_SEO_FEATURE_MONITORING', true),
+        'indexnow' => env('LAZY_SEO_FEATURE_INDEXNOW', true),
+        'content_intelligence' => env('LAZY_SEO_FEATURE_CONTENT_INTELLIGENCE', true),
+        'og_image' => env('LAZY_SEO_FEATURE_OG_IMAGE', true),
+        'livewire' => env('LAZY_SEO_FEATURE_LIVEWIRE', true),
+        'admin' => env('LAZY_SEO_FEATURE_ADMIN', true),
+        'api' => env('LAZY_SEO_FEATURE_API', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Database tables
     |--------------------------------------------------------------------------
     |

@@ -27,6 +27,25 @@ seo()
     ->robots(['index', 'follow']);
 ```
 
+## Use presets
+
+```php
+seo()->preset('article', $post);
+seo()->preset('product', $product);
+seo()->preset('homepage');
+```
+
+You can still override anything at runtime:
+
+```php
+seo()
+    ->for($post)
+    ->with([
+        'title' => $post->title,
+        'description' => $post->excerpt,
+    ]);
+```
+
 ## Render one-off tags
 
 Use overrides when you do not need to keep fluent state:
@@ -68,6 +87,18 @@ Resolve it:
 
 ```php
 $data = seo()->resolve(model: $post, url: request()->path());
+```
+
+## Keep it light
+
+Disable modules your application does not use:
+
+```php
+'features' => [
+    'monitoring' => false,
+    'indexnow' => false,
+    'livewire' => false,
+],
 ```
 
 ## Common commands

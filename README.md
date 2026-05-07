@@ -69,12 +69,31 @@ seo()
     ->robots(['index', 'follow']);
 ```
 
+Use presets for common page types:
+
+```php
+seo()->preset('article', $post);
+seo()->preset('product', $product);
+seo()->preset('homepage');
+```
+
+Select a model or URL and merge runtime overrides:
+
+```php
+seo()
+    ->for($post)
+    ->with([
+        'title' => $post->title,
+        'description' => $post->excerpt,
+    ]);
+```
+
 You can also resolve and render directly:
 
 ```php
 $data = seo()->resolve(url: request()->path());
 
-return seo()->renderMetaTags();
+return seo()->meta();
 ```
 
 One-off render with overrides:
@@ -113,6 +132,22 @@ Table names are configured directly in the published config file and intentional
 Change them before running migrations if your application needs custom names.
 
 Runtime settings like routes, sitemap path, crawler limits, queue settings, alerts, IndexNow and AI token may use `env()` inside the config.
+
+### Feature flags
+
+Use feature flags to keep the package light for each application:
+
+```php
+'features' => [
+    'meta' => true,
+    'schema' => true,
+    'redirects' => true,
+    'sitemap' => true,
+    'monitoring' => false,
+    'indexnow' => false,
+    'livewire' => false,
+],
+```
 
 ## Blade usage
 

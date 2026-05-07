@@ -14,6 +14,10 @@ class SeoManager extends SeoService implements SeoResolver
 {
     protected array $fluent = [];
 
+    protected ?Model $sourceModel = null;
+
+    protected ?string $sourceUrl = null;
+
     protected ?SeoData $resolvedData = null;
 
     public function analyze(Seo $seo): array
@@ -64,6 +68,9 @@ class SeoManager extends SeoService implements SeoResolver
 
     public function resolve(?Model $model = null, ?string $url = null, array $overrides = []): SeoData
     {
+        $model ??= $this->sourceModel;
+        $url ??= $this->sourceUrl;
+
         $data = SeoData::defaults();
 
         // Priority: config defaults -> route/url SEO -> model SEO -> template/fluent/manual overrides.
@@ -86,6 +93,38 @@ class SeoManager extends SeoService implements SeoResolver
     public function make(array $attributes = []): SeoData
     {
         return $this->resolve(overrides: $attributes);
+    }
+
+    public function for(Model|string|null $target = null): self
+    {
+        if ($target instanceof Model) {
+            $this->sourceModel = $target;
+
+            return $this;
+        }
+
+        $this->sourceUrl = $target ?: request()->path();
+
+        return $this;
+    }
+
+    public function with(array $attributes): self
+    {
+        $this->fluent = array_replace($this->fluent, $this->normalizeKeys($attributes));
+
+        return $this;
+    }
+
+    public function preset(string $name, mixed $source = null, array $attributes = []): self
+    {
+        if ($source instanceof Model || is_string($source)) {
+            $this->for($source);
+        }
+
+        return $this->with(array_replace(
+            $this->presetData($name, $source),
+            $this->normalizeKeys($attributes)
+        ));
     }
 
     public function title(string $title): self
@@ -171,6 +210,8 @@ class SeoManager extends SeoService implements SeoResolver
     public function reset(): self
     {
         $this->fluent = [];
+        $this->sourceModel = null;
+        $this->sourceUrl = null;
         $this->resolvedData = null;
 
         return $this;
@@ -218,6 +259,11 @@ class SeoManager extends SeoService implements SeoResolver
     public function renderMetaTags(?Seo $seo = null, array $overrides = []): HtmlString
     {
         return $this->render($seo, $overrides);
+    }
+
+    public function meta(?Seo $seo = null, array $overrides = []): HtmlString
+    {
+        return $this->renderMetaTags($seo, $overrides);
     }
 
     protected function fallbackSeo(array $attributes = []): Seo
@@ -269,6 +315,64 @@ class SeoManager extends SeoService implements SeoResolver
         }
 
         return $value;
+    }
+
+    protected function presetData(string $name, mixed $source = null): array
+    {
+        return match (str($name)->lower()->replace(['-', '_'], '')->toString()) {
+            'article', 'blogpost', 'blogposting' => $this->contentPreset($source, 'article'),
+            'product' => $this->contentPreset($source, 'product'),
+            'home', 'homepage' => [
+                'title' => config('app.name'),
+                'url' => url('/'),
+                'canonicalUrl' => url('/'),
+                'type' => 'website',
+            ],
+            default => ['type' => 'website'],
+        };
+    }
+
+    protected function contentPreset(mixed $source, string $type): array
+    {
+        $url = $this->firstValue($source, ['getSeoUrl', 'url', 'slug', 'permalink']);
+
+        return array_filter([
+            'title' => $this->firstValue($source, ['seo_title', 'title', 'name']),
+            'description' => $this->firstValue($source, ['seo_description', 'description', 'excerpt', 'summary']),
+            'image' => $this->firstValue($source, ['seo_image', 'image', 'image_url', 'cover_url', 'thumbnail_url']),
+            'url' => $url,
+            'canonicalUrl' => $url,
+            'type' => $type,
+        ], static fn (mixed $value): bool => $value !== null && $value !== '');
+    }
+
+    protected function firstValue(mixed $source, array $keys): mixed
+    {
+        if (! $source) {
+            return null;
+        }
+
+        foreach ($keys as $key) {
+            $value = null;
+
+            if ($source instanceof Model) {
+                $value = method_exists($source, $key)
+                    ? $source->{$key}()
+                    : $source->getAttribute($key);
+            } elseif (is_array($source)) {
+                $value = $source[$key] ?? null;
+            } elseif (is_object($source)) {
+                $value = method_exists($source, $key)
+                    ? $source->{$key}()
+                    : ($source->{$key} ?? null);
+            }
+
+            if (is_scalar($value) && $value !== '') {
+                return (string) $value;
+            }
+        }
+
+        return null;
     }
 
     protected function normalizeKeys(array $data): array

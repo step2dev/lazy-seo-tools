@@ -108,16 +108,21 @@ class LazySeoServiceProvider extends PackageServiceProvider
     {
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'seo');
 
-        Blade::component('lazy-seo-meta', MetaComponent::class);
-        Blade::component('lazy-seo-title', TitleComponent::class);
-        Blade::component('lazy-seo-jsonld', JsonLdComponent::class);
-        Blade::component('lazy-seo-schema', JsonLdComponent::class);
-        Blade::component('seo::json-ld', JsonLdComponent::class);
-        Blade::component('seo::schema', JsonLdComponent::class);
-        Blade::component('lazy-seo-og', OgComponent::class);
-        Blade::component('lazy-seo-twitter', TwitterComponent::class);
+        if ($this->featureEnabled('meta')) {
+            Blade::component('lazy-seo-meta', MetaComponent::class);
+            Blade::component('lazy-seo-title', TitleComponent::class);
+            Blade::component('lazy-seo-og', OgComponent::class);
+            Blade::component('lazy-seo-twitter', TwitterComponent::class);
+        }
 
-        if ((bool) config('lazy-seo.monitoring.enabled', true) && config('lazy-seo.monitoring.schedule')) {
+        if ($this->featureEnabled('schema')) {
+            Blade::component('lazy-seo-jsonld', JsonLdComponent::class);
+            Blade::component('lazy-seo-schema', JsonLdComponent::class);
+            Blade::component('seo::json-ld', JsonLdComponent::class);
+            Blade::component('seo::schema', JsonLdComponent::class);
+        }
+
+        if ($this->featureEnabled('monitoring') && (bool) config('lazy-seo.monitoring.enabled', true) && config('lazy-seo.monitoring.schedule')) {
             $this->app->booted(function (): void {
                 $command = (bool) config('lazy-seo.monitoring.scheduled_queue', false)
                     ? 'lazy-seo:monitor --queue'
@@ -129,7 +134,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
             });
         }
 
-        if (class_exists(Livewire::class)) {
+        if ($this->featureEnabled('livewire') && class_exists(Livewire::class)) {
             Livewire::component('lazy-seo-form', SeoForm::class);
             Livewire::component('lazy-seo-analyzer', SeoAnalyzerLivewire::class);
             Livewire::component('lazy-seo-redirect-table', RedirectTable::class);
@@ -137,5 +142,10 @@ class LazySeoServiceProvider extends PackageServiceProvider
             Livewire::component('lazy-seo-issues-table', SeoIssuesTable::class);
             Livewire::component('lazy-seo-scan-detail', SeoScanDetail::class);
         }
+    }
+
+    protected function featureEnabled(string $feature): bool
+    {
+        return (bool) config("lazy-seo.features.{$feature}", true);
     }
 }

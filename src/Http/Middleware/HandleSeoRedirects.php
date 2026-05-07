@@ -13,7 +13,7 @@ class HandleSeoRedirects
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! config('lazy-seo.redirects.enabled', true)) {
+        if (! config('lazy-seo.features.redirects', true) || ! config('lazy-seo.redirects.enabled', true)) {
             return $next($request);
         }
 

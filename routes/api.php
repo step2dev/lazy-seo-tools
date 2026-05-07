@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Step2dev\LazySeoTools\Http\Controllers\Api\SeoApiController;
 use Step2dev\LazySeoTools\Http\Middleware\ForceHeadless;
 
-if (config('lazy-seo.routes.api', false)) {
+if (config('lazy-seo.routes.api', false) && config('lazy-seo.features.api', true)) {
     Route::middleware(array_merge(config('lazy-seo.routes.api_middleware', ['api']), [ForceHeadless::class]))
         ->prefix(config('lazy-seo.routes.api_prefix', 'seo'))
         ->name('lazy-seo.api.')

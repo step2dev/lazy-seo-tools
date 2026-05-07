@@ -34,3 +34,16 @@ it('returns gone responses', function (): void {
 
     $this->get('/gone-page')->assertGone();
 });
+
+it('skips redirects when the redirects feature is disabled', function (): void {
+    config()->set('lazy-seo.features.redirects', false);
+
+    SeoRedirect::query()->create([
+        'old_url' => '/old-page',
+        'new_url' => '/new-page',
+        'status_code' => 301,
+        'enabled' => true,
+    ]);
+
+    $this->get('/old-page')->assertOk()->assertSee('old');
+});

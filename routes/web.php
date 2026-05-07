@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Step2dev\LazySeoTools\Models\SeoScan;
 
-if (config('lazy-seo.routes.web', false)) {
+if (config('lazy-seo.routes.web', false) && config('lazy-seo.features.admin', true)) {
     Route::middleware(config('lazy-seo.routes.admin_middleware', ['web']))
         ->prefix(config('lazy-seo.routes.admin_prefix', 'lazy-seo'))
         ->name('lazy-seo.')
