@@ -14,6 +14,8 @@ class SeoHistoryService
         $scans = $this->scans($startUrl, $limit);
         $current = $scans->first();
         $previous = $scans->skip(1)->first();
+        $currentScore = $current instanceof SeoScan ? $current->score : null;
+        $previousScore = $previous instanceof SeoScan ? $previous->score : null;
 
         $regressions = $current instanceof SeoScan && $previous instanceof SeoScan
             ? $this->newIssues($current, $previous)
@@ -24,9 +26,9 @@ class SeoHistoryService
             : [];
 
         return new SeoHistorySummary(
-            currentScore: $current?->score,
-            previousScore: $previous?->score,
-            scoreDelta: ($current?->score ?? 0) - ($previous?->score ?? 0),
+            currentScore: $currentScore,
+            previousScore: $previousScore,
+            scoreDelta: ($currentScore ?? 0) - ($previousScore ?? 0),
             scoreTrend: $scans->reverse()->map(fn (SeoScan $scan): array => [
                 'id' => $scan->id,
                 'score' => $scan->score,

@@ -23,7 +23,7 @@ class RedirectImportExportService
         $skipped = 0;
 
         while (($row = fgetcsv($handle)) !== false) {
-            if ($row === [null] || $row === false) {
+            if ($row === [null]) {
                 continue;
             }
 
@@ -35,7 +35,7 @@ class RedirectImportExportService
 
             $data = array_combine($header, array_pad($row, count($header), null));
 
-            if (! is_array($data) || empty($data['old_url'])) {
+            if (empty($data['old_url'])) {
                 $skipped++;
 
                 continue;

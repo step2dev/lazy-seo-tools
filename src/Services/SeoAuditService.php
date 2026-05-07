@@ -65,7 +65,7 @@ class SeoAuditService
     public function pageIssues(CrawledPage $page): array
     {
         $issues = [];
-        $metrics = $page->analysis?->metrics ?? [];
+        $metrics = $page->analysis->metrics ?? [];
 
         if ($page->status >= 400 || $page->status === 0) {
             $issues[] = $this->issue($page->url, 'http_error', 'error', 'Page returned HTTP status '.$page->status.'.', [

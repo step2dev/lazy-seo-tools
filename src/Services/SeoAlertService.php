@@ -31,7 +31,7 @@ class SeoAlertService
             $scoreThreshold = (int) config('lazy-seo.alerts.score_threshold', 75);
             $criticalThreshold = (int) config('lazy-seo.alerts.critical_issues_threshold', 1);
             $newIssuesThreshold = (int) config('lazy-seo.alerts.new_issues_threshold', 1);
-            $criticalIssues = $scan->issues()->open()->where('severity', 'error')->count();
+            $criticalIssues = $scan->issues()->where('status', 'open')->where('severity', 'error')->count();
 
             if ($scoreThreshold > 0 && $scan->score < $scoreThreshold) {
                 $reasons[] = 'score_below_threshold';

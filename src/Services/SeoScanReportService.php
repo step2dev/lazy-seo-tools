@@ -61,7 +61,7 @@ class SeoScanReportService
     protected function typeBreakdown(SeoScan $scan): array
     {
         return $scan->issues()
-            ->open()
+            ->where('status', 'open')
             ->selectRaw('type, severity, count(*) as aggregate')
             ->groupBy('type', 'severity')
             ->orderByDesc('aggregate')
@@ -81,7 +81,7 @@ class SeoScanReportService
         $limit = max(1, (int) config('lazy-seo.alerts.include_issues_limit', 10));
 
         return $scan->issues()
-            ->open()
+            ->where('status', 'open')
             ->orderByRaw("case severity when 'error' then 0 when 'warning' then 1 else 2 end")
             ->orderBy('type')
             ->limit($limit)

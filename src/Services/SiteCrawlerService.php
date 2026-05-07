@@ -246,7 +246,7 @@ class SiteCrawlerService
                 'alt' => $alt[2] ?? null,
                 'missing_alt' => ! isset($alt[2]) || trim($alt[2]) === '',
             ];
-        }, $matches[0] ?? []);
+        }, $matches[0]);
     }
 
     protected function isExcluded(string $url, array $exclude): bool

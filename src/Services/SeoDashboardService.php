@@ -25,7 +25,7 @@ class SeoDashboardService
             'noticeIssues' => $this->issuesFor($latest)->where('severity', 'notice')->where('status', 'open')->count(),
             'ignoredIssues' => $this->issuesFor($latest)->where('status', 'ignored')->count(),
             'resolvedIssues' => $this->issuesFor($latest)->where('status', 'resolved')->count(),
-            'externalBrokenLinks' => $latest?->external_broken_links_count ?? 0,
+            'externalBrokenLinks' => $latest instanceof SeoScan ? $latest->external_broken_links_count : 0,
             'scoreHistory' => $this->scoreHistory(12),
             'commonIssueTypes' => $this->commonIssueTypes($latest),
             'topRedirects' => $this->topRedirects(),
@@ -45,12 +45,12 @@ class SeoDashboardService
 
         return [
             'scan' => $scan,
-            'openIssues' => $scan->issues()->open()->count(),
-            'criticalIssues' => $scan->issues()->open()->where('severity', 'error')->count(),
-            'warningIssues' => $scan->issues()->open()->where('severity', 'warning')->count(),
-            'noticeIssues' => $scan->issues()->open()->where('severity', 'notice')->count(),
-            'ignoredIssues' => $scan->issues()->ignored()->count(),
-            'manuallyResolvedIssues' => $scan->issues()->resolved()->count(),
+            'openIssues' => $scan->issues()->where('status', 'open')->count(),
+            'criticalIssues' => $scan->issues()->where('status', 'open')->where('severity', 'error')->count(),
+            'warningIssues' => $scan->issues()->where('status', 'open')->where('severity', 'warning')->count(),
+            'noticeIssues' => $scan->issues()->where('status', 'open')->where('severity', 'notice')->count(),
+            'ignoredIssues' => $scan->issues()->where('status', 'ignored')->count(),
+            'manuallyResolvedIssues' => $scan->issues()->where('status', 'resolved')->count(),
             'issueTypes' => $scan->issues()->distinct()->orderBy('type')->pluck('type')->all(),
             'severityBreakdown' => $this->severityBreakdown($scan),
             'typeBreakdown' => $this->typeBreakdown($scan),
@@ -70,17 +70,18 @@ class SeoDashboardService
             ->values();
     }
 
-    /** @return Collection<int, object> */
+    /** @return Collection<int, SeoScanIssue> */
     public function commonIssueTypes(?SeoScan $scan, int $limit = 8): Collection
     {
         return SeoScanIssue::query()
             ->when($scan, fn ($query) => $query->where('seo_scan_id', $scan->id))
-            ->open()
+            ->where('status', 'open')
             ->selectRaw('type, severity, count(*) as aggregate')
             ->groupBy('type', 'severity')
             ->orderByDesc('aggregate')
             ->limit($limit)
-            ->get();
+            ->get()
+            ->toBase();
     }
 
     /** @return EloquentCollection<int, SeoRedirect> */
@@ -93,7 +94,7 @@ class SeoDashboardService
             ->get(['old_url', 'new_url', 'status_code', 'hits', 'last_hit_at']);
     }
 
-    /** @return Collection<int, object> */
+    /** @return Collection<int, SeoScanIssue> */
     public function worstPages(?SeoScan $scan, int $limit = 10): Collection
     {
         if (! $scan) {
@@ -101,36 +102,39 @@ class SeoDashboardService
         }
 
         return $scan->issues()
-            ->open()
+            ->where('status', 'open')
             ->whereNotNull('url')
             ->selectRaw('url, count(*) as issues_count, sum(case when severity = ? then 1 else 0 end) as errors_count', ['error'])
             ->groupBy('url')
             ->orderByDesc('errors_count')
             ->orderByDesc('issues_count')
             ->limit($limit)
-            ->get();
+            ->get()
+            ->toBase();
     }
 
-    /** @return Collection<int, object> */
+    /** @return Collection<int, SeoScanIssue> */
     protected function severityBreakdown(SeoScan $scan): Collection
     {
         return $scan->issues()
             ->selectRaw('severity, status, count(*) as aggregate')
             ->groupBy('severity', 'status')
             ->orderBy('severity')
-            ->get();
+            ->get()
+            ->toBase();
     }
 
-    /** @return Collection<int, object> */
+    /** @return Collection<int, SeoScanIssue> */
     protected function typeBreakdown(SeoScan $scan): Collection
     {
         return $scan->issues()
-            ->open()
+            ->where('status', 'open')
             ->selectRaw('type, severity, count(*) as aggregate')
             ->groupBy('type', 'severity')
             ->orderByDesc('aggregate')
             ->limit(20)
-            ->get();
+            ->get()
+            ->toBase();
     }
 
     /** @return array<string, mixed> */

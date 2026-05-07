@@ -80,6 +80,7 @@ class SeoScanIssue extends Model
         ])->save();
     }
 
+    /** @return BelongsTo<SeoScan, $this> */
     public function scan(): BelongsTo
     {
         return $this->belongsTo(SeoScan::class, 'seo_scan_id');

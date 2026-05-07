@@ -8,6 +8,7 @@ use Step2dev\LazySeoTools\Models\Seo;
 
 trait HasSeo
 {
+    /** @return MorphOne<Seo, $this> */
     public function seo(): MorphOne
     {
         return $this->morphOne(Seo::class, 'seoable');

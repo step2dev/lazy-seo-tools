@@ -32,7 +32,7 @@ class SchemaService
         return $this->base('WebPage', [
             'name' => $data['name'] ?? $data['title'] ?? config('lazy-seo.defaults.title', config('app.name')),
             'description' => $data['description'] ?? config('lazy-seo.defaults.description', ''),
-            'url' => $data['url'] ?? request()?->fullUrl(),
+            'url' => $data['url'] ?? request()->fullUrl(),
         ], $data);
     }
 
@@ -46,7 +46,7 @@ class SchemaService
             'dateModified' => $data['date_modified'] ?? $data['dateModified'] ?? null,
             'author' => $this->personOrOrganization($data['author'] ?? null),
             'publisher' => $this->organization($data['publisher'] ?? []),
-            'mainEntityOfPage' => $data['url'] ?? request()?->fullUrl(),
+            'mainEntityOfPage' => $data['url'] ?? request()->fullUrl(),
         ], $data, [
             'author',
             'publisher',
@@ -164,7 +164,7 @@ class SchemaService
             'price' => $data['price'] ?? null,
             'priceCurrency' => $data['price_currency'] ?? $data['priceCurrency'] ?? 'USD',
             'availability' => $data['availability'] ?? 'https://schema.org/InStock',
-            'url' => $data['url'] ?? request()?->fullUrl(),
+            'url' => $data['url'] ?? request()->fullUrl(),
         ]);
     }
 

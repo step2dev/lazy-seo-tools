@@ -64,11 +64,13 @@ class SeoScan extends Model
         return config('lazy-seo.tables.seo_scans', 'seo_scans');
     }
 
+    /** @return BelongsTo<SeoScan, $this> */
     public function previousScan(): BelongsTo
     {
         return $this->belongsTo(self::class, 'previous_scan_id');
     }
 
+    /** @return HasMany<SeoScanIssue, $this> */
     public function issues(): HasMany
     {
         return $this->hasMany(SeoScanIssue::class, 'seo_scan_id');

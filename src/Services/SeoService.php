@@ -10,13 +10,15 @@ class SeoService
     public function createOrUpdateSeo(Model $model, array $seoData): Seo
     {
         /** @var Seo $seo */
-        $seo = $model->seo()->updateOrCreate([], $seoData);
+        $seo = $model->morphOne(Seo::class, 'seoable')->updateOrCreate([], $seoData);
 
         return $seo;
     }
 
     public function getSeo(Model $model): Seo
     {
-        return $model->seo ?: new Seo;
+        $seo = $model->morphOne(Seo::class, 'seoable')->first();
+
+        return $seo instanceof Seo ? $seo : new Seo;
     }
 }

@@ -109,7 +109,7 @@ class ContentIntelligenceService
     {
         preg_match_all('/[\p{L}\p{N}\']+/u', mb_strtolower($text), $matches);
 
-        return array_values(array_filter($matches[0] ?? []));
+        return array_values(array_filter($matches[0]));
     }
 
     /** @return array<int, string> */
@@ -151,7 +151,7 @@ class ContentIntelligenceService
                 'alt' => $alt,
                 'missing_alt' => blank($alt),
             ];
-        }, $matches[0] ?? []);
+        }, $matches[0]);
     }
 
     /** @return array<int, array<string, string|null>> */
@@ -173,7 +173,7 @@ class ContentIntelligenceService
                 'type' => $external ? 'external' : 'internal',
                 'anchor' => null,
             ];
-        }, $matches[2] ?? []);
+        }, $matches[2]);
     }
 
     /** @return array<string, array{count:int,density:float}> */

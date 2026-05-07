@@ -152,7 +152,7 @@ class SitemapGeneratorService
             ->whereNotNull('url')
             ->where('indexable', true)
             ->get(['url', 'updated_at'])
-            ->map(fn (Seo $seo) => [
+            ->map(fn (Seo $seo): array => [
                 'loc' => $seo->url,
                 'lastmod' => $seo->updated_at,
             ])

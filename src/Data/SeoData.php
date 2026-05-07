@@ -23,7 +23,7 @@ final readonly class SeoData
         $defaults = config('lazy-seo.defaults', []);
 
         return self::fromArray(array_replace([
-            'url' => request()?->fullUrl() ?? url('/'),
+            'url' => request()->fullUrl(),
             'title' => (string) ($defaults['title'] ?? config('app.name', 'Laravel')),
             'description' => (string) ($defaults['description'] ?? ''),
             'keywords' => (string) ($defaults['keywords'] ?? ''),
@@ -47,7 +47,7 @@ final readonly class SeoData
             : ['noindex', 'nofollow'];
 
         return self::defaults(array_replace([
-            'url' => $seo->url ?: (request()?->fullUrl() ?? url('/')),
+            'url' => $seo->url ?: request()->fullUrl(),
             'title' => self::translated($seo, 'title', $locale) ?: null,
             'description' => self::translated($seo, 'description', $locale) ?: null,
             'keywords' => self::translated($seo, 'keywords', $locale) ?: null,
@@ -63,7 +63,7 @@ final readonly class SeoData
         $extra = array_diff_key($data, array_flip($known));
 
         return new self(
-            url: (string) ($data['url'] ?? (request()?->fullUrl() ?? url('/'))),
+            url: (string) ($data['url'] ?? request()->fullUrl()),
             title: (string) ($data['title'] ?? config('app.name', 'Laravel')),
             description: (string) ($data['description'] ?? ''),
             keywords: is_array($data['keywords'] ?? null) ? implode(', ', $data['keywords']) : (string) ($data['keywords'] ?? ''),

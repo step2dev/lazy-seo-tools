@@ -14,3 +14,7 @@ parameters:
     treatPhpDocTypesAsCertain: false
     universalObjectCratesClasses:
         - Illuminate\Database\Eloquent\Model
+    ignoreErrors:
+        -
+            identifier: trait.unused
+            path: src/Concerns/HasSeo.php

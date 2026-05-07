@@ -171,7 +171,7 @@ class SeoAnalyzerService
     protected function checkImages(array $metrics, int &$score, array &$warnings): void
     {
         if ($metrics['images_missing_alt'] > 0) {
-            $score -= min(10, $metrics['images_missing_alt'] * 2);
+            $score -= (int) min(10, $metrics['images_missing_alt'] * 2);
             $warnings[] = 'Some images are missing alt attributes.';
         }
     }
@@ -251,7 +251,7 @@ class SeoAnalyzerService
 
         preg_match_all('/<img\b[^>]*>/i', $html, $matches);
 
-        return collect($matches[0] ?? [])
+        return collect($matches[0])
             ->filter(fn (string $tag): bool => ! preg_match('/\salt\s*=\s*(["\']).*?\1/i', $tag))
             ->count();
     }
@@ -264,7 +264,7 @@ class SeoAnalyzerService
 
         preg_match_all('/<a\b[^>]*href\s*=\s*(["\'])(.*?)\1[^>]*>/i', $html, $matches);
 
-        return collect($matches[2] ?? [])
+        return collect($matches[2])
             ->filter(function (string $href) use ($internal): bool {
                 $isExternal = str_starts_with($href, 'http://') || str_starts_with($href, 'https://') || str_starts_with($href, '//');
 
