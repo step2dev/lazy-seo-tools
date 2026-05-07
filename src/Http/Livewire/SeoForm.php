@@ -8,8 +8,11 @@ use Step2dev\LazySeoTools\Models\Seo;
 class SeoForm extends Component
 {
     public ?string $url = null;
+
     public ?string $title = null;
+
     public ?string $description = null;
+
     public ?string $keywords = null;
 
     public function save(): void
