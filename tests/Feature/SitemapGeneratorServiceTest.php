@@ -60,3 +60,40 @@ it('can clear sitemap cache', function (): void {
     expect($service->clearCache())->toBeTrue();
     expect(Cache::has($service->cacheKey()))->toBeFalse();
 });
+
+it('warms sitemap cache and returns generated files', function (): void {
+    config()->set('app.url', 'https://example.com');
+    config()->set('lazy-seo.sitemap.path', 'lazy-seo-warm.xml');
+    config()->set('lazy-seo.sitemap.cache_key', 'lazy-seo-test-warm');
+
+    $service = app(SitemapGeneratorService::class);
+    $result = $service->warmCache([
+        ['loc' => '/warm'],
+    ]);
+
+    expect($result['cached_path'])->toBe($result['files'][0]);
+    expect(Cache::get('lazy-seo-test-warm'))->toBe($result['cached_path']);
+    expect(File::get($result['cached_path']))->toContain('<loc>https://example.com/warm</loc>');
+
+    $service->clearCache();
+    File::delete($result['files']);
+});
+
+it('respects configured sitemap max url limit', function (): void {
+    config()->set('app.url', 'https://example.com');
+    config()->set('lazy-seo.sitemap.path', 'lazy-seo-limit.xml');
+    config()->set('lazy-seo.sitemap.max_urls', 1);
+
+    $file = app(SitemapGeneratorService::class)->generate([
+        ['loc' => '/one'],
+        ['loc' => '/two'],
+    ]);
+
+    $xml = File::get($file);
+
+    expect($xml)
+        ->toContain('<loc>https://example.com/one</loc>')
+        ->not->toContain('<loc>https://example.com/two</loc>');
+
+    File::delete($file);
+});

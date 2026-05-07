@@ -17,6 +17,7 @@ use Step2dev\LazySeoTools\Commands\LazySeoCommand;
 use Step2dev\LazySeoTools\Commands\MonitorSeoCommand;
 use Step2dev\LazySeoTools\Commands\QueueSeoScanCommand;
 use Step2dev\LazySeoTools\Commands\SeoHistoryCommand;
+use Step2dev\LazySeoTools\Commands\WarmSitemapCommand;
 use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
@@ -62,6 +63,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
             ->hasCommands([
                 LazySeoCommand::class,
                 GenerateSitemapCommand::class,
+                WarmSitemapCommand::class,
                 ImportRedirectsCommand::class,
                 ExportRedirectsCommand::class,
                 CrawlSiteCommand::class,

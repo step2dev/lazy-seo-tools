@@ -30,6 +30,12 @@ class SitemapGeneratorService
         $items ??= $this->items();
 
         $items = $this->filterItems($items);
+        $limit = (int) config('lazy-seo.sitemap.max_urls', 0);
+
+        if ($limit > 0) {
+            $items = array_slice($items, 0, $limit);
+        }
+
         $chunkSize = max(1, min(50000, (int) config('lazy-seo.sitemap.chunk_size', 50000)));
         $gzip = (bool) config('lazy-seo.sitemap.gzip', false);
         $chunks = array_chunk($items, $chunkSize);
@@ -65,22 +71,61 @@ class SitemapGeneratorService
     /**
      * @param  array<int, array<string, mixed>>|null  $items
      */
-    public function cached(?array $items = null, ?string $cacheKey = null, ?int $minutes = null): string
+    public function cached(?array $items = null, ?string $cacheKey = null, ?int $minutes = null, ?string $path = null): string
     {
         $cacheKey ??= $this->cacheKey();
         $minutes ??= (int) config('lazy-seo.sitemap.cache_minutes', 60);
 
-        return Cache::remember($cacheKey, now()->addMinutes($minutes), fn () => $this->generate($items));
+        return $this->cacheStore()->remember(
+            $cacheKey,
+            now()->addMinutes($minutes),
+            fn (): string => $this->generate($items, $path)
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>|null  $items
+     * @return array{index?: string, files: array<int, string>, cached_path: string}
+     */
+    public function warmCache(?array $items = null, ?string $cacheKey = null, ?int $minutes = null, ?string $path = null): array
+    {
+        $cacheKey ??= $this->cacheKey();
+        $minutes ??= (int) config('lazy-seo.sitemap.cache_minutes', 60);
+
+        $result = $this->generateFiles($items, $path);
+        $cachedPath = $result['index'] ?? $result['files'][0];
+
+        $this->cacheStore()->put($cacheKey, $cachedPath, now()->addMinutes($minutes));
+
+        return $result + ['cached_path' => $cachedPath];
     }
 
     public function clearCache(?string $cacheKey = null): bool
     {
-        return Cache::forget($cacheKey ?? $this->cacheKey());
+        return $this->cacheStore()->forget($cacheKey ?? $this->cacheKey());
     }
 
     public function cacheKey(): string
     {
         return (string) config('lazy-seo.sitemap.cache_key', 'lazy-seo.sitemap');
+    }
+
+    /** @return array<int, string> */
+    public function cacheTags(): array
+    {
+        return array_values(array_filter((array) config('lazy-seo.sitemap.cache_tags', ['lazy-seo', 'sitemap']), 'is_string'));
+    }
+
+    protected function cacheStore(): mixed
+    {
+        $store = Cache::store(config('lazy-seo.sitemap.cache_store'));
+        $tags = $this->cacheTags();
+
+        if ((bool) config('lazy-seo.sitemap.cache_tags_enabled', false) && $tags !== [] && method_exists($store, 'tags')) {
+            return $store->tags($tags);
+        }
+
+        return $store;
     }
 
     /**
