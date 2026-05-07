@@ -145,7 +145,6 @@ return [
         'store_regressions' => env('LAZY_SEO_HISTORY_STORE_REGRESSIONS', true),
     ],
 
-
     'audit' => [
         'severity_weights' => [
             'error' => 8,
@@ -227,7 +226,6 @@ return [
         'webhook_url' => env('LAZY_SEO_ALERT_WEBHOOK_URL'),
         'include_issues_limit' => (int) env('LAZY_SEO_ALERT_INCLUDE_ISSUES_LIMIT', 10),
     ],
-
 
     'content_intelligence' => [
         'enabled' => env('LAZY_SEO_CONTENT_INTELLIGENCE_ENABLED', true),

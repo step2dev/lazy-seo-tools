@@ -2,7 +2,6 @@
 
 namespace Step2dev\LazySeoTools\Services;
 
-use Illuminate\Support\Collection;
 use Step2dev\LazySeoTools\Models\SeoScan;
 use Step2dev\LazySeoTools\Models\SeoScanIssue;
 
