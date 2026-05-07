@@ -369,3 +369,35 @@ CLI:
 php artisan lazy-seo:content storage/app/page.html --keywords="laravel seo,seo tools"
 php artisan lazy-seo:content storage/app/page.html --keywords="laravel seo" --json
 ```
+
+### Queueable SEO crawl
+
+```bash
+php artisan lazy-seo:crawl-queue https://example.com --max-pages=100
+```
+
+Or queue a monitoring scan from the regular command:
+
+```bash
+php artisan lazy-seo:monitor https://example.com --queue --max-pages=100
+```
+
+Queue options live in `config/lazy-seo.php` under `queue`.
+
+### Historical analytics
+
+Every monitoring scan stores score deltas and compares issues against the previous scan for the same URL.
+
+```bash
+php artisan lazy-seo:history https://example.com
+php artisan lazy-seo:history https://example.com --json
+```
+
+Stored scan fields include:
+
+- `previous_scan_id`
+- `score_delta`
+- `new_issues_count`
+- `resolved_issues_count`
+- `regressions`
+- `resolved_issues`

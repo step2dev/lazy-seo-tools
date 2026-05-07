@@ -9,7 +9,10 @@ use Step2dev\LazySeoTools\Models\SeoScan;
 
 class SeoMonitoringService
 {
-    public function __construct(protected SiteCrawlerService $crawler) {}
+    public function __construct(
+        protected SiteCrawlerService $crawler,
+        protected SeoHistoryService $history,
+    ) {}
 
     public function scan(string $url, array $options = []): SeoScan
     {
@@ -21,10 +24,14 @@ class SeoMonitoringService
     public function store(CrawlResult $result, array $options = []): SeoScan
     {
         $issues = $this->issuesFromResult($result);
+        $previous = $this->history->latest($result->startUrl);
+        $score = $result->score();
 
         $scan = SeoScan::query()->create([
             'start_url' => $result->startUrl,
-            'score' => $result->score(),
+            'previous_scan_id' => $previous?->id,
+            'score' => $score,
+            'score_delta' => $previous ? $score - $previous->score : 0,
             'pages_count' => count($result->pages),
             'issues_count' => count($issues),
             'broken_links_count' => count($result->brokenLinks),
@@ -33,6 +40,8 @@ class SeoMonitoringService
             'duplicate_descriptions_count' => count($result->duplicateDescriptions),
             'canonical_conflicts_count' => count($result->canonicalConflicts),
             'summary' => Arr::except($result->toArray(), ['pages']),
+            'regressions' => [],
+            'resolved_issues' => [],
             'options' => $options,
             'finished_at' => now(),
         ]);
@@ -41,9 +50,18 @@ class SeoMonitoringService
             $scan->issues()->create($issue);
         }
 
-        $scan->forceFill(['issues_count' => count($issues)])->save();
+        $regressions = $previous ? $this->history->newIssues($scan, $previous) : [];
+        $resolved = $previous ? $this->history->resolvedIssues($scan, $previous) : [];
 
-        return $scan->load('issues');
+        $scan->forceFill([
+            'issues_count' => count($issues),
+            'new_issues_count' => count($regressions),
+            'resolved_issues_count' => count($resolved),
+            'regressions' => $regressions,
+            'resolved_issues' => $resolved,
+        ])->save();
+
+        return $scan->load('issues', 'previousScan');
     }
 
     /** @return array<int, array<string, mixed>> */

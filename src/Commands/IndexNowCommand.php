@@ -4,6 +4,7 @@ namespace Step2dev\LazySeoTools\Commands;
 
 use Illuminate\Console\Command;
 use Step2dev\LazySeoTools\Services\IndexNowService;
+use Step2dev\LazySeoTools\Services\SitemapGeneratorService;
 
 class IndexNowCommand extends Command
 {

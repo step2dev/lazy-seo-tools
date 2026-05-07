@@ -229,3 +229,7 @@ vendor/bin/pint
 ## Notes
 
 This package intentionally keeps API routes disabled by default. Enable them only when your app really needs headless SEO management.
+
+## Queueable crawler and history
+
+Use `lazy-seo:crawl-queue` for async scans. Use `lazy-seo:history` to inspect score trends, regressions and resolved issues.

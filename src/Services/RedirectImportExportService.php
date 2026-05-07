@@ -29,7 +29,6 @@ class RedirectImportExportService
 
             if ($header === null) {
                 $header = array_map(fn (string $value): string => trim($value), $row);
-
                 continue;
             }
 
@@ -37,7 +36,6 @@ class RedirectImportExportService
 
             if (! is_array($data) || empty($data['old_url'])) {
                 $skipped++;
-
                 continue;
             }
 
@@ -51,7 +49,6 @@ class RedirectImportExportService
 
             if (! in_array($payload['status_code'], config('lazy-seo.redirects.allowed_status_codes', [301, 302, 307, 308, 410]), true)) {
                 $skipped++;
-
                 continue;
             }
 
@@ -60,13 +57,11 @@ class RedirectImportExportService
             if ($existing && $updateExisting) {
                 $existing->update($payload);
                 $updated++;
-
                 continue;
             }
 
             if ($existing) {
                 $skipped++;
-
                 continue;
             }
 

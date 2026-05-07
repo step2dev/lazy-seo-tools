@@ -65,7 +65,6 @@ class ContentIntelligenceService
             if ($metric['count'] === 0) {
                 $score -= 5;
                 $warnings[] = "Target keyword '{$keyword}' is missing from the content.";
-
                 continue;
             }
 

@@ -99,6 +99,7 @@ return [
         'seo.deleted' => env('LAZY_SEO_WEBHOOK_DELETED'),
     ],
 
+
     'schema' => [
         'organization' => [
             'logo' => env('LAZY_SEO_ORGANIZATION_LOGO'),
@@ -107,6 +108,19 @@ return [
         'website' => [
             'search_url' => env('LAZY_SEO_SEARCH_URL'),
         ],
+    ],
+
+    'queue' => [
+        'enabled' => env('LAZY_SEO_QUEUE_ENABLED', true),
+        'connection' => env('LAZY_SEO_QUEUE_CONNECTION'),
+        'queue' => env('LAZY_SEO_QUEUE_NAME', 'default'),
+        'chunk_pages' => (int) env('LAZY_SEO_QUEUE_CHUNK_PAGES', 25),
+    ],
+
+    'history' => [
+        'enabled' => env('LAZY_SEO_HISTORY_ENABLED', true),
+        'trend_limit' => (int) env('LAZY_SEO_HISTORY_TREND_LIMIT', 10),
+        'store_regressions' => env('LAZY_SEO_HISTORY_STORE_REGRESSIONS', true),
     ],
 
     'monitoring' => [
@@ -134,6 +148,7 @@ return [
             'logout',
         ],
     ],
+
 
     'indexnow' => [
         'enabled' => env('LAZY_SEO_INDEXNOW_ENABLED', false),

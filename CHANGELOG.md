@@ -64,3 +64,12 @@
 - Added Content Intelligence service for headings, readability, keyword density, images and internal links.
 - Added `lazy-seo:content` command.
 - Added tests for IndexNow and Content Intelligence.
+
+## v12 - Queueable crawler and historical analytics
+
+- Added `RunSeoScanJob` for async SEO monitoring scans.
+- Added `lazy-seo:crawl-queue` command.
+- Added `lazy-seo:history` command.
+- Added `SeoHistoryService` and `SeoHistorySummary` DTO.
+- Added scan score deltas, previous scan relation, new/resolved issues counters, regressions and resolved issue snapshots.
+- Added queue/history config without using env for table names.
