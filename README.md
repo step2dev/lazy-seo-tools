@@ -1,6 +1,6 @@
 # Lazy SEO Tools
 
-Production-focused SEO toolkit for Laravel 11/12.
+Production-focused SEO toolkit for Laravel 11/12/13.
 
 Lazy SEO Tools helps you manage page meta, model SEO, redirects, sitemaps, SEO scans, monitoring, IndexNow submissions, content analysis and JSON-LD from one Laravel package.
 
@@ -9,8 +9,8 @@ Built with `spatie/laravel-package-tools`.
 ## Requirements
 
 - PHP `^8.2`
-- Laravel `^11.0` or `^12.0`
-- Livewire `^3.6`
+- Laravel `^11.0` or `^12.0` or `^13.0`
+- Livewire `^3.6` or `^4.0`
 - `spatie/laravel-sitemap`
 - `spatie/laravel-translatable`
 - `intervention/image`
