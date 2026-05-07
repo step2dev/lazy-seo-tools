@@ -1,3 +1,14 @@
+
+## v7 - Sitemap v2 and Redirects v2
+
+- Added sitemap index generation.
+- Added sitemap chunking up to 50k URLs per file.
+- Added optional gzip sitemap output.
+- Added static URL, model source, and exclude support via config.
+- Added regex redirects with backreferences.
+- Added CSV import/export for redirects.
+- Added redirect loop protection tests.
+
 # Changelog
 
 ## Unreleased

@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('new_url', 2048)->nullable();
             $table->unsignedSmallInteger('status_code')->default(301)->index();
             $table->boolean('enabled')->default(true)->index();
+            $table->boolean('is_regex')->default(false)->index();
             $table->unsignedBigInteger('hits')->default(0);
             $table->timestamp('last_hit_at')->nullable();
             $table->timestamps();

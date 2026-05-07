@@ -117,3 +117,65 @@ Supports exact URLs, wildcard URLs, 301/302/307/308, 410 Gone, hit counters and 
 composer install
 vendor/bin/pest
 ```
+
+## Sitemap v2
+
+Generate sitemap files from SEO records, static URLs, and configured Eloquent models:
+
+```bash
+php artisan lazy-seo:sitemap
+php artisan lazy-seo:sitemap --path=sitemaps/sitemap.xml
+```
+
+Config options:
+
+```php
+'sitemap' => [
+    'path' => 'sitemap.xml',
+    'index_path' => 'sitemap.xml',
+    'chunk_size' => 50000,
+    'gzip' => false,
+    'force_index' => false,
+    'exclude' => ['admin/*'],
+    'static_urls' => [
+        ['loc' => '/', 'changefreq' => 'daily', 'priority' => 1.0],
+    ],
+    'models' => [
+        App\Models\Post::class => [
+            'enabled' => true,
+            'url' => 'getSeoUrl',
+            'scope' => 'published',
+            'lastmod_column' => 'updated_at',
+            'changefreq' => 'weekly',
+            'priority' => 0.8,
+        ],
+    ],
+],
+```
+
+When the URL count exceeds `chunk_size`, the package writes sitemap chunks and a sitemap index automatically.
+
+## Redirects v2
+
+Supported redirect types:
+
+- exact: `old-page` → `/new-page`
+- wildcard: `blog/*` → `/articles`
+- regex: `#^old/(post-[0-9]+)$#` → `/new/$1`
+- gone: `410`
+
+CSV import/export:
+
+```bash
+php artisan lazy-seo:redirects-import redirects.csv
+php artisan lazy-seo:redirects-export redirects.csv
+```
+
+CSV columns:
+
+```csv
+old_url,new_url,status_code,enabled,is_regex
+old-page,/new-page,301,1,0
+#^old/(post-[0-9]+)$#,/new/$1,301,1,1
+```
+

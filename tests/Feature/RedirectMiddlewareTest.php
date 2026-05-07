@@ -42,3 +42,40 @@ it('tracks redirect hits', function () {
     expect($redirect->refresh()->hits)->toBe(1)
         ->and($redirect->last_hit_at)->not->toBeNull();
 });
+
+it('supports wildcard redirects', function () {
+    Route::middleware(HandleSeoRedirects::class)->get('/blog/old-post', fn () => 'old');
+
+    SeoRedirect::create([
+        'old_url' => 'blog/*',
+        'new_url' => '/articles',
+        'status_code' => 301,
+    ]);
+
+    $this->get('/blog/old-post')->assertRedirect('/articles');
+});
+
+it('supports regex redirects with backreferences', function () {
+    Route::middleware(HandleSeoRedirects::class)->get('/old/post-123', fn () => 'old');
+
+    SeoRedirect::create([
+        'old_url' => '#^old/(post-[0-9]+)$#',
+        'new_url' => '/new/$1',
+        'status_code' => 301,
+        'is_regex' => true,
+    ]);
+
+    $this->get('/old/post-123')->assertRedirect('/new/post-123');
+});
+
+it('does not redirect into a loop', function () {
+    Route::middleware(HandleSeoRedirects::class)->get('/same', fn () => 'same');
+
+    SeoRedirect::create([
+        'old_url' => 'same',
+        'new_url' => '/same',
+        'status_code' => 301,
+    ]);
+
+    $this->get('/same')->assertOk()->assertSee('same');
+});

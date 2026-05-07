@@ -19,12 +19,14 @@ class SeoRedirect extends Model
         'new_url',
         'status_code',
         'enabled',
+        'is_regex',
         'hits',
         'last_hit_at',
     ];
 
     protected $casts = [
         'enabled' => 'bool',
+        'is_regex' => 'bool',
         'status_code' => 'int',
         'hits' => 'int',
         'last_hit_at' => 'datetime',

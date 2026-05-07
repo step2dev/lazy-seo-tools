@@ -31,18 +31,21 @@ class HandleSeoRedirects
             return $next($request);
         }
 
-        return redirect()->to($this->targetUrl($redirect->new_url, $request), $redirect->status_code);
+        return redirect()->to($this->targetUrl($this->resolvedTarget($redirect, $request), $request), $redirect->status_code);
     }
 
     protected function findRedirect(Request $request): ?SeoRedirect
     {
         $path = trim($request->path(), '/');
-        $variants = [$path, '/'.$path, $request->getRequestUri(), $request->fullUrl()];
+        $variants = array_unique([$path, '/'.$path, $request->getRequestUri(), $request->fullUrl()]);
 
-        $redirect = SeoRedirect::query()
+        $query = SeoRedirect::query()
             ->enabled()
-            ->whereIn('status_code', config('lazy-seo.redirects.allowed_status_codes', [301, 302, 307, 308, 410]))
-            ->whereIn('old_url', array_unique($variants))
+            ->whereIn('status_code', config('lazy-seo.redirects.allowed_status_codes', [301, 302, 307, 308, 410]));
+
+        $redirect = (clone $query)
+            ->where('is_regex', false)
+            ->whereIn('old_url', $variants)
             ->orderByDesc('id')
             ->first();
 
@@ -50,13 +53,28 @@ class HandleSeoRedirects
             return $redirect;
         }
 
-        return SeoRedirect::query()
-            ->enabled()
-            ->whereIn('status_code', config('lazy-seo.redirects.allowed_status_codes', [301, 302, 307, 308, 410]))
-            ->where('old_url', 'like', '%*%')
+        if (config('lazy-seo.redirects.wildcard_enabled', true)) {
+            $redirect = (clone $query)
+                ->where('is_regex', false)
+                ->where('old_url', 'like', '%*%')
+                ->orderByDesc('id')
+                ->get()
+                ->first(fn (SeoRedirect $item): bool => $this->wildcardMatches($item->old_url, $path));
+
+            if ($redirect) {
+                return $redirect;
+            }
+        }
+
+        if (! config('lazy-seo.redirects.regex_enabled', true)) {
+            return null;
+        }
+
+        return (clone $query)
+            ->where('is_regex', true)
             ->orderByDesc('id')
             ->get()
-            ->first(fn (SeoRedirect $item): bool => $this->wildcardMatches($item->old_url, $path));
+            ->first(fn (SeoRedirect $item): bool => $this->regexMatches($item->old_url, $path, $request));
     }
 
     protected function wildcardMatches(string $pattern, string $path): bool
@@ -65,6 +83,43 @@ class HandleSeoRedirects
         $regex = '#^'.str_replace('\\*', '.*', preg_quote($pattern, '#')).'$#u';
 
         return (bool) preg_match($regex, $path);
+    }
+
+    protected function regexMatches(string $pattern, string $path, Request $request): bool
+    {
+        $regex = $this->normalizeRegex($pattern);
+
+        if ($regex === null) {
+            return false;
+        }
+
+        return (bool) preg_match($regex, $path) || (bool) preg_match($regex, '/'.$path) || (bool) preg_match($regex, $request->getRequestUri());
+    }
+
+    protected function resolvedTarget(SeoRedirect $redirect, Request $request): string
+    {
+        if (! $redirect->is_regex) {
+            return $redirect->new_url;
+        }
+
+        $regex = $this->normalizeRegex($redirect->old_url);
+
+        if ($regex === null) {
+            return $redirect->new_url;
+        }
+
+        return preg_replace($regex, $redirect->new_url, trim($request->path(), '/')) ?: $redirect->new_url;
+    }
+
+    protected function normalizeRegex(string $pattern): ?string
+    {
+        if (@preg_match($pattern, '') !== false) {
+            return $pattern;
+        }
+
+        $wrapped = '#'.$pattern.'#u';
+
+        return @preg_match($wrapped, '') !== false ? $wrapped : null;
     }
 
     protected function targetUrl(string $target, Request $request): string

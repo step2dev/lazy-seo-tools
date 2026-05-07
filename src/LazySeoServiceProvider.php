@@ -6,7 +6,9 @@ use Illuminate\Support\Facades\Blade;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Step2dev\LazySeoTools\Commands\ExportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\GenerateSitemapCommand;
+use Step2dev\LazySeoTools\Commands\ImportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\LazySeoCommand;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
@@ -17,6 +19,7 @@ use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\OGImageService;
 use Step2dev\LazySeoTools\Services\OgMetaService;
 use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
+use Step2dev\LazySeoTools\Services\RedirectImportExportService;
 use Step2dev\LazySeoTools\Services\SeoManager;
 use Step2dev\LazySeoTools\Services\SitemapGeneratorService;
 use Step2dev\LazySeoTools\View\Components\JsonLdComponent;
@@ -40,6 +43,8 @@ class LazySeoServiceProvider extends PackageServiceProvider
             ->hasCommands([
                 LazySeoCommand::class,
                 GenerateSitemapCommand::class,
+                ImportRedirectsCommand::class,
+                ExportRedirectsCommand::class,
             ]);
     }
 
@@ -51,6 +56,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->app->alias(SeoManager::class, 'lazy-seo-manager');
 
         $this->app->singleton(SitemapGeneratorService::class);
+        $this->app->singleton(RedirectImportExportService::class);
         $this->app->singleton(SeoAnalyzerService::class);
         $this->app->singleton(CanonicalService::class);
         $this->app->singleton(JsonLdService::class);
