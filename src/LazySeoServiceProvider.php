@@ -7,29 +7,33 @@ use Illuminate\Support\Facades\Schedule;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Step2dev\LazySeoTools\Commands\CrawlSiteCommand;
 use Step2dev\LazySeoTools\Commands\ExportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\GenerateSitemapCommand;
 use Step2dev\LazySeoTools\Commands\ImportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\LazySeoCommand;
+use Step2dev\LazySeoTools\Commands\CrawlSiteCommand;
 use Step2dev\LazySeoTools\Commands\MonitorSeoCommand;
-use Step2dev\LazySeoTools\Contracts\SeoResolver;
+use Step2dev\LazySeoTools\Commands\IndexNowCommand;
+use Step2dev\LazySeoTools\Commands\ContentIntelligenceCommand;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
-use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
-use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
 use Step2dev\LazySeoTools\Http\Livewire\SeoIssuesTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoMonitoringDashboard;
+use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
+use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
+use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Services\CanonicalService;
 use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\OGImageService;
 use Step2dev\LazySeoTools\Services\OgMetaService;
-use Step2dev\LazySeoTools\Services\RedirectImportExportService;
-use Step2dev\LazySeoTools\Services\SchemaService;
 use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
+use Step2dev\LazySeoTools\Services\SchemaService;
+use Step2dev\LazySeoTools\Services\RedirectImportExportService;
 use Step2dev\LazySeoTools\Services\SeoManager;
 use Step2dev\LazySeoTools\Services\SeoMonitoringService;
-use Step2dev\LazySeoTools\Services\SiteCrawlerService;
+use Step2dev\LazySeoTools\Services\IndexNowService;
+use Step2dev\LazySeoTools\Services\ContentIntelligenceService;
 use Step2dev\LazySeoTools\Services\SitemapGeneratorService;
+use Step2dev\LazySeoTools\Services\SiteCrawlerService;
 use Step2dev\LazySeoTools\Services\UrlNormalizer;
 use Step2dev\LazySeoTools\View\Components\JsonLdComponent;
 use Step2dev\LazySeoTools\View\Components\MetaComponent;
@@ -56,6 +60,8 @@ class LazySeoServiceProvider extends PackageServiceProvider
                 ExportRedirectsCommand::class,
                 CrawlSiteCommand::class,
                 MonitorSeoCommand::class,
+                IndexNowCommand::class,
+                ContentIntelligenceCommand::class,
             ]);
     }
 
@@ -72,6 +78,8 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->app->singleton(RedirectImportExportService::class);
         $this->app->singleton(SeoAnalyzerService::class);
         $this->app->singleton(SeoMonitoringService::class);
+        $this->app->singleton(IndexNowService::class);
+        $this->app->singleton(ContentIntelligenceService::class);
         $this->app->singleton(SchemaService::class);
         $this->app->singleton(CanonicalService::class);
         $this->app->singleton(JsonLdService::class);
@@ -91,6 +99,8 @@ class LazySeoServiceProvider extends PackageServiceProvider
         Blade::component('seo::schema', JsonLdComponent::class);
         Blade::component('lazy-seo-og', OgComponent::class);
         Blade::component('lazy-seo-twitter', TwitterComponent::class);
+
+
 
         if ((bool) config('lazy-seo.monitoring.enabled', true) && config('lazy-seo.monitoring.schedule')) {
             $this->app->booted(function (): void {

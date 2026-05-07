@@ -17,6 +17,7 @@ return [
         'seo_templates' => 'seo_templates',
         'seo_scans' => 'seo_scans',
         'seo_scan_issues' => 'seo_scan_issues',
+        'seo_indexing_logs' => 'seo_indexing_logs',
     ],
 
     'defaults' => [
@@ -98,6 +99,7 @@ return [
         'seo.deleted' => env('LAZY_SEO_WEBHOOK_DELETED'),
     ],
 
+
     'schema' => [
         'organization' => [
             'logo' => env('LAZY_SEO_ORGANIZATION_LOGO'),
@@ -132,6 +134,29 @@ return [
             'login',
             'logout',
         ],
+    ],
+
+
+    'indexnow' => [
+        'enabled' => env('LAZY_SEO_INDEXNOW_ENABLED', false),
+        'key' => env('LAZY_SEO_INDEXNOW_KEY'),
+        'key_location' => env('LAZY_SEO_INDEXNOW_KEY_LOCATION'),
+        'endpoint' => env('LAZY_SEO_INDEXNOW_ENDPOINT', 'https://api.indexnow.org/indexnow'),
+        'host' => env('LAZY_SEO_INDEXNOW_HOST'),
+        'timeout' => (int) env('LAZY_SEO_INDEXNOW_TIMEOUT', 10),
+        'retry_times' => (int) env('LAZY_SEO_INDEXNOW_RETRY_TIMES', 2),
+        'retry_sleep' => (int) env('LAZY_SEO_INDEXNOW_RETRY_SLEEP', 250),
+        'chunk_size' => (int) env('LAZY_SEO_INDEXNOW_CHUNK_SIZE', 1000),
+        'log' => env('LAZY_SEO_INDEXNOW_LOG', true),
+    ],
+
+    'content_intelligence' => [
+        'enabled' => env('LAZY_SEO_CONTENT_INTELLIGENCE_ENABLED', true),
+        'min_words' => (int) env('LAZY_SEO_CONTENT_MIN_WORDS', 300),
+        'max_keyword_density' => (float) env('LAZY_SEO_CONTENT_MAX_KEYWORD_DENSITY', 3.5),
+        'min_keyword_density' => (float) env('LAZY_SEO_CONTENT_MIN_KEYWORD_DENSITY', 0.3),
+        'max_readability_sentence_words' => (int) env('LAZY_SEO_CONTENT_MAX_SENTENCE_WORDS', 22),
+        'internal_link_minimum' => (int) env('LAZY_SEO_CONTENT_INTERNAL_LINK_MINIMUM', 1),
     ],
 
     'ai_token' => env('LAZY_SEO_AI_TOKEN'),

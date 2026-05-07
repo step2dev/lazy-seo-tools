@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Services;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -11,7 +12,7 @@ use Step2dev\LazySeoTools\Models\Seo;
 class SitemapGeneratorService
 {
     /**
-     * @param  array<int, array<string, mixed>>|null  $items
+     * @param array<int, array<string, mixed>>|null $items
      */
     public function generate(?array $items = null, ?string $path = null): string
     {
@@ -21,7 +22,7 @@ class SitemapGeneratorService
     }
 
     /**
-     * @param  array<int, array<string, mixed>>|null  $items
+     * @param array<int, array<string, mixed>>|null $items
      * @return array{index?: string, files: array<int, string>}
      */
     public function generateFiles(?array $items = null, ?string $path = null): array
@@ -63,7 +64,7 @@ class SitemapGeneratorService
     }
 
     /**
-     * @param  array<int, array<string, mixed>>|null  $items
+     * @param array<int, array<string, mixed>>|null $items
      */
     public function cached(?array $items = null, ?string $cacheKey = null, ?int $minutes = null): string
     {
@@ -115,7 +116,7 @@ class SitemapGeneratorService
             }
 
             /** @var Model $model */
-            $model = new $class;
+            $model = new $class();
             $query = $class::query();
 
             if (($sourceConfig['enabled'] ?? true) === false) {

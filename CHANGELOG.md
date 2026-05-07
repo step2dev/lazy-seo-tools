@@ -55,3 +55,12 @@
 - Added `SeoScan` and `SeoScanIssue` models.
 - Added Livewire admin dashboard and issues table.
 - Added monitoring tests.
+
+## v11 - IndexNow + Content Intelligence
+
+- Added IndexNow URL submission service.
+- Added `lazy-seo:indexnow` command with URL, file and sitemap modes.
+- Added `seo_indexing_logs` table and model.
+- Added Content Intelligence service for headings, readability, keyword density, images and internal links.
+- Added `lazy-seo:content` command.
+- Added tests for IndexNow and Content Intelligence.

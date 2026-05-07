@@ -329,3 +329,43 @@ Monitoring tables are configurable in `config/lazy-seo.php` without `env()`:
     'seo_scan_issues' => 'seo_scan_issues',
 ],
 ```
+
+## IndexNow
+
+```bash
+php artisan lazy-seo:indexnow https://example.com/posts/my-post
+php artisan lazy-seo:indexnow --sitemap
+php artisan lazy-seo:indexnow --file=urls.txt
+```
+
+Configure it in `config/lazy-seo.php`:
+
+```php
+'indexnow' => [
+    'enabled' => env('LAZY_SEO_INDEXNOW_ENABLED', false),
+    'key' => env('LAZY_SEO_INDEXNOW_KEY'),
+    'endpoint' => env('LAZY_SEO_INDEXNOW_ENDPOINT', 'https://api.indexnow.org/indexnow'),
+]
+```
+
+Indexing logs are stored in the table configured by `tables.seo_indexing_logs`.
+Table names stay config-only and do not use `env()`.
+
+## Content Intelligence
+
+```php
+$result = app(\Step2dev\LazySeoTools\Services\ContentIntelligenceService::class)
+    ->analyze($html, ['laravel seo'], url('/'));
+
+$result->score;
+$result->warnings;
+$result->suggestions;
+$result->metrics;
+```
+
+CLI:
+
+```bash
+php artisan lazy-seo:content storage/app/page.html --keywords="laravel seo,seo tools"
+php artisan lazy-seo:content storage/app/page.html --keywords="laravel seo" --json
+```
