@@ -139,6 +139,7 @@ return [
         'store_regressions' => env('LAZY_SEO_HISTORY_STORE_REGRESSIONS', true),
     ],
 
+
     'audit' => [
         'severity_weights' => [
             'error' => 8,

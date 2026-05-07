@@ -6,12 +6,13 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Step2dev\LazySeoTools\Models\SeoScan;
 use Step2dev\LazySeoTools\Models\SeoScanIssue;
+use Step2dev\LazySeoTools\Services\SeoDashboardService;
 
-class SeoIssuesTable extends Component
+class SeoScanDetail extends Component
 {
     use WithPagination;
 
-    public ?int $scanId = null;
+    public SeoScan $scan;
 
     public string $severity = '';
 
@@ -24,10 +25,45 @@ class SeoIssuesTable extends Component
     /** @var array<int, bool> */
     public array $selected = [];
 
-    public function updatingSeverity(): void { $this->resetPage(); }
-    public function updatingType(): void { $this->resetPage(); }
-    public function updatingStatus(): void { $this->resetPage(); }
-    public function updatingSearch(): void { $this->resetPage(); }
+    public function mount(SeoScan $scan): void
+    {
+        $this->scan = $scan;
+    }
+
+    public function updatingSeverity(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingType(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function markIssueResolved(int $issueId): void
+    {
+        $this->issueQuery()->whereKey($issueId)->firstOrFail()->markResolved();
+    }
+
+    public function ignoreIssue(int $issueId): void
+    {
+        $this->issueQuery()->whereKey($issueId)->firstOrFail()->markIgnored();
+    }
+
+    public function reopenIssue(int $issueId): void
+    {
+        $this->issueQuery()->whereKey($issueId)->firstOrFail()->reopen();
+    }
 
     public function markSelectedResolved(): void
     {
@@ -49,10 +85,16 @@ class SeoIssuesTable extends Component
 
     public function render()
     {
-        $scanId = $this->scanId ?: SeoScan::query()->latestFirst()->value('id');
+        $data = app(SeoDashboardService::class)->scanDetail($this->scan);
 
-        $query = SeoScanIssue::query()
-            ->when($scanId, fn ($query) => $query->where('seo_scan_id', $scanId))
+        return view('lazy-seo::livewire.scan-detail', $data + [
+            'issues' => $this->filteredIssues()->paginate(25),
+        ]);
+    }
+
+    protected function filteredIssues()
+    {
+        return $this->issueQuery()
             ->when($this->severity !== '', fn ($query) => $query->where('severity', $this->severity))
             ->when($this->type !== '', fn ($query) => $query->where('type', $this->type))
             ->when($this->status !== '', fn ($query) => $query->where('status', $this->status))
@@ -65,27 +107,22 @@ class SeoIssuesTable extends Component
             })
             ->orderByRaw("case severity when 'error' then 1 when 'warning' then 2 else 3 end")
             ->latest();
+    }
 
-        return view('lazy-seo::livewire.issues-table', [
-            'issues' => $query->paginate(20),
-            'scans' => SeoScan::query()->latestFirst()->limit(50)->get(),
-            'currentScanId' => $scanId,
-            'types' => SeoScanIssue::query()
-                ->when($scanId, fn ($query) => $query->where('seo_scan_id', $scanId))
-                ->distinct()
-                ->orderBy('type')
-                ->pluck('type')
-                ->all(),
-        ]);
+    protected function issueQuery()
+    {
+        return SeoScanIssue::query()->where('seo_scan_id', $this->scan->id);
     }
 
     protected function selectedIssues()
     {
-        $ids = collect($this->selected)->filter()->keys()->map(fn ($id) => (int) $id)->values()->all();
+        $ids = collect($this->selected)
+            ->filter()
+            ->keys()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
 
-        return SeoScanIssue::query()
-            ->when($this->scanId, fn ($query) => $query->where('seo_scan_id', $this->scanId))
-            ->whereKey($ids)
-            ->get();
+        return $this->issueQuery()->whereKey($ids)->get();
     }
 }

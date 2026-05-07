@@ -2,22 +2,26 @@
     <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
         <div>
             <h2 style="font-size:1.4rem; margin:0;">Lazy SEO Monitoring</h2>
-            <p style="margin:.25rem 0 0; color:#64748b;">Latest crawl snapshots, issue trends and redirect usage.</p>
+            <p style="margin:.25rem 0 0; color:#64748b;">Latest crawl snapshots, issue trends, weak pages and redirect usage.</p>
         </div>
 
         @if($latest)
-            <strong style="font-size:2rem;">{{ $latest->score }}/100</strong>
+            <div style="text-align:right;">
+                <strong style="font-size:2rem;">{{ $latest->score }}/100</strong>
+                <div style="color:{{ $latest->score_delta >= 0 ? '#16a34a' : '#dc2626' }}; font-size:.85rem;">{{ $latest->score_delta >= 0 ? '+' : '' }}{{ $latest->score_delta }} since previous scan</div>
+            </div>
         @endif
     </div>
 
     @if($latest)
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:.75rem;">
             <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $latest->pages_count }}</strong><br><span>Pages</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $latest->issues_count }}</strong><br><span>Issues</span></div>
+            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $latest->issues_count }}</strong><br><span>Total issues</span></div>
             <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $latest->broken_links_count + $externalBrokenLinks }}</strong><br><span>Broken links</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $criticalIssues }}</strong><br><span>Errors</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $warningIssues }}</strong><br><span>Warnings</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $noticeIssues }}</strong><br><span>Notices</span></div>
+            <div style="border:1px solid #fee2e2; border-radius:12px; padding:1rem;"><strong>{{ $criticalIssues }}</strong><br><span>Open errors</span></div>
+            <div style="border:1px solid #fef3c7; border-radius:12px; padding:1rem;"><strong>{{ $warningIssues }}</strong><br><span>Open warnings</span></div>
+            <div style="border:1px solid #dbeafe; border-radius:12px; padding:1rem;"><strong>{{ $noticeIssues }}</strong><br><span>Open notices</span></div>
+            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $ignoredIssues }}</strong><br><span>Ignored</span></div>
             <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $averageScore ?? '—' }}</strong><br><span>Avg score</span></div>
         </div>
 
@@ -32,7 +36,7 @@
             </div>
 
             <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;">
-                <h3 style="margin:0 0 .75rem; font-size:1rem;">Most common issues</h3>
+                <h3 style="margin:0 0 .75rem; font-size:1rem;">Most common open issues</h3>
                 <div style="display:grid; gap:.5rem;">
                     @forelse($commonIssueTypes as $issueType)
                         <div style="display:flex; justify-content:space-between; gap:1rem;">
@@ -40,21 +44,21 @@
                             <strong>{{ $issueType->aggregate }}</strong>
                         </div>
                     @empty
-                        <span style="color:#64748b;">No issues in the latest scan.</span>
+                        <span style="color:#64748b;">No open issues in the latest scan.</span>
                     @endforelse
                 </div>
             </div>
 
             <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;">
-                <h3 style="margin:0 0 .75rem; font-size:1rem;">Top redirects</h3>
+                <h3 style="margin:0 0 .75rem; font-size:1rem;">Weakest pages</h3>
                 <div style="display:grid; gap:.5rem;">
-                    @forelse($topRedirects as $redirect)
+                    @forelse($worstPages as $page)
                         <div style="display:grid; gap:.15rem;">
-                            <strong>{{ $redirect->hits }} hits · {{ $redirect->status_code }}</strong>
-                            <small style="word-break:break-all; color:#64748b;">{{ $redirect->old_url }} → {{ $redirect->new_url ?: 'gone' }}</small>
+                            <strong>{{ $page->issues_count }} issues · {{ $page->errors_count }} errors</strong>
+                            <small style="word-break:break-all; color:#64748b;">{{ $page->url }}</small>
                         </div>
                     @empty
-                        <span style="color:#64748b;">No redirect hits yet.</span>
+                        <span style="color:#64748b;">No weak pages detected.</span>
                     @endforelse
                 </div>
             </div>
@@ -69,6 +73,7 @@
                         <th style="padding:.75rem;">Score</th>
                         <th style="padding:.75rem;">Pages</th>
                         <th style="padding:.75rem;">Issues</th>
+                        <th style="padding:.75rem;"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -79,6 +84,7 @@
                             <td style="padding:.75rem;"><strong>{{ $scan->score }}</strong></td>
                             <td style="padding:.75rem;">{{ $scan->pages_count }}</td>
                             <td style="padding:.75rem;">{{ $scan->issues_count }}</td>
+                            <td style="padding:.75rem; text-align:right;"><a href="{{ route('lazy-seo.scans.show', $scan) }}">Open</a></td>
                         </tr>
                     @endforeach
                 </tbody>

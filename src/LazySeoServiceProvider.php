@@ -23,6 +23,7 @@ use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
 use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
 use Step2dev\LazySeoTools\Http\Livewire\SeoIssuesTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoMonitoringDashboard;
+use Step2dev\LazySeoTools\Http\Livewire\SeoScanDetail;
 use Step2dev\LazySeoTools\Services\CanonicalService;
 use Step2dev\LazySeoTools\Services\ContentIntelligenceService;
 use Step2dev\LazySeoTools\Services\IndexNowService;
@@ -33,6 +34,7 @@ use Step2dev\LazySeoTools\Services\RedirectImportExportService;
 use Step2dev\LazySeoTools\Services\SchemaService;
 use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
 use Step2dev\LazySeoTools\Services\SeoAuditService;
+use Step2dev\LazySeoTools\Services\SeoDashboardService;
 use Step2dev\LazySeoTools\Services\SeoHistoryService;
 use Step2dev\LazySeoTools\Services\SeoManager;
 use Step2dev\LazySeoTools\Services\SeoMonitoringService;
@@ -84,6 +86,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->app->singleton(RedirectImportExportService::class);
         $this->app->singleton(SeoAnalyzerService::class);
         $this->app->singleton(SeoAuditService::class);
+        $this->app->singleton(SeoDashboardService::class);
         $this->app->singleton(SeoMonitoringService::class);
         $this->app->singleton(IndexNowService::class);
         $this->app->singleton(ContentIntelligenceService::class);
@@ -122,6 +125,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
             Livewire::component('lazy-seo-redirect-table', RedirectTable::class);
             Livewire::component('lazy-seo-monitoring-dashboard', SeoMonitoringDashboard::class);
             Livewire::component('lazy-seo-issues-table', SeoIssuesTable::class);
+            Livewire::component('lazy-seo-scan-detail', SeoScanDetail::class);
         }
     }
 }
