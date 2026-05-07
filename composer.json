@@ -80,7 +80,10 @@
             "aliases": {
                 "LazySeo": "Step2dev\\LazySeoTools\\Facades\\LazySeo",
                 "Seo": "Step2dev\\LazySeoTools\\Facades\\Seo"
-            }
+            },
+            "dont-discover": [
+                "spatie/laravel-ray"
+            ]
         }
     },
     "minimum-stability": "dev",
