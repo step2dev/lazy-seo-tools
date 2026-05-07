@@ -59,7 +59,16 @@ class LazySeoServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasTranslations()
-            ->discoversMigrations()
+            ->hasMigrations([
+                '2025_06_19_000001_create_seo_table',
+                '2025_06_19_000002_create_seo_redirects_table',
+                '2025_06_19_000003_create_seo_templates_table',
+                '2025_06_19_000004_create_seo_scans_table',
+                '2025_06_19_000005_create_seo_scan_issues_table',
+                '2025_06_19_000006_create_seo_indexing_logs_table',
+                '2025_06_19_000007_add_workflow_columns_to_seo_scan_issues_table',
+                '2025_06_19_000008_add_status_columns_to_seo_scans_table',
+            ])
             ->hasRoute('web')
             ->hasRoute('api')
             ->hasCommands([
