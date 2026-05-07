@@ -4,6 +4,8 @@ namespace Step2dev\LazySeoTools\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Step2dev\LazySeoTools\Models\SeoRedirect;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -36,16 +38,16 @@ class HandleSeoRedirects
 
     protected function findRedirect(Request $request): ?SeoRedirect
     {
-        $path = trim($request->path(), '/');
-        $variants = array_unique([$path, '/'.$path, $request->getRequestUri(), $request->fullUrl()]);
+        $allowedStatusCodes = config('lazy-seo.redirects.allowed_status_codes', [301, 302, 307, 308, 410]);
+        $normalizedPath = SeoRedirect::normalizePath($request->path());
 
         $query = SeoRedirect::query()
             ->enabled()
-            ->whereIn('status_code', config('lazy-seo.redirects.allowed_status_codes', [301, 302, 307, 308, 410]));
+            ->whereIn('status_code', $allowedStatusCodes);
 
         $redirect = (clone $query)
-            ->where('is_regex', false)
-            ->whereIn('old_url', $variants)
+            ->exact()
+            ->whereIn('normalized_old_url_hash', array_map('sha1', $this->exactVariants($request, $normalizedPath)))
             ->orderByDesc('id')
             ->first();
 
@@ -53,28 +55,54 @@ class HandleSeoRedirects
             return $redirect;
         }
 
-        if (config('lazy-seo.redirects.wildcard_enabled', true)) {
-            $redirect = (clone $query)
-                ->where('is_regex', false)
-                ->where('old_url', 'like', '%*%')
-                ->orderByDesc('id')
-                ->get()
-                ->first(fn (SeoRedirect $item): bool => $this->wildcardMatches($item->old_url, $path));
+        return $this->findPatternRedirect($request, $query);
+    }
 
-            if ($redirect) {
-                return $redirect;
-            }
-        }
+    /**
+     * @return array<int, string>
+     */
+    protected function exactVariants(Request $request, string $normalizedPath): array
+    {
+        return array_values(array_unique(array_filter([
+            $normalizedPath,
+            SeoRedirect::normalizePath($request->getRequestUri()),
+            SeoRedirect::normalizePath($request->fullUrl()),
+        ])));
+    }
 
-        if (! config('lazy-seo.redirects.regex_enabled', true)) {
+    protected function findPatternRedirect(Request $request, $baseQuery): ?SeoRedirect
+    {
+        if (! config('lazy-seo.redirects.wildcard_enabled', true) && ! config('lazy-seo.redirects.regex_enabled', true)) {
             return null;
         }
 
-        return (clone $query)
-            ->where('is_regex', true)
-            ->orderByDesc('id')
-            ->get()
-            ->first(fn (SeoRedirect $item): bool => $this->regexMatches($item->old_url, $path, $request));
+        return $this->patternRedirects($baseQuery)
+            ->first(fn (SeoRedirect $item): bool => $this->patternMatches($item, $request));
+    }
+
+    protected function patternRedirects($baseQuery)
+    {
+        $cacheSeconds = (int) config('lazy-seo.redirects.cache_seconds', 60);
+        $callback = fn () => (clone $baseQuery)->pattern()->orderByDesc('id')->get();
+
+        if ($cacheSeconds <= 0) {
+            return $callback();
+        }
+
+        return Cache::remember('lazy-seo.redirects.patterns', $cacheSeconds, $callback);
+    }
+
+    protected function patternMatches(SeoRedirect $redirect, Request $request): bool
+    {
+        $path = trim($request->path(), '/');
+
+        if (! $redirect->is_regex && config('lazy-seo.redirects.wildcard_enabled', true)) {
+            return $this->wildcardMatches($redirect->old_url, $path);
+        }
+
+        return $redirect->is_regex
+            && config('lazy-seo.redirects.regex_enabled', true)
+            && $this->regexMatches($redirect->old_url, $path, $request);
     }
 
     protected function wildcardMatches(string $pattern, string $path): bool
@@ -133,9 +161,9 @@ class HandleSeoRedirects
 
     protected function isRedirectLoop(string $target, Request $request): bool
     {
-        $targetPath = trim(parse_url($target, PHP_URL_PATH) ?: $target, '/');
+        $targetPath = SeoRedirect::normalizePath((string) (parse_url($target, PHP_URL_PATH) ?: $target));
 
-        return $targetPath === trim($request->path(), '/');
+        return $targetPath === SeoRedirect::normalizePath($request->path());
     }
 
     protected function markHit(SeoRedirect $redirect): void
@@ -143,7 +171,7 @@ class HandleSeoRedirects
         $redirect->newQuery()
             ->whereKey($redirect->getKey())
             ->update([
-                'hits' => $redirect->hits + 1,
+                'hits' => DB::raw('hits + 1'),
                 'last_hit_at' => now(),
             ]);
     }

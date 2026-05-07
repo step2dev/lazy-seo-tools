@@ -36,6 +36,9 @@ return [
         'admin_middleware' => ['web'],
         'api' => env('LAZY_SEO_API_ROUTES', false),
         'api_prefix' => env('LAZY_SEO_API_PREFIX', 'seo'),
+        'api_middleware' => ['api'],
+        'api_write_middleware' => [],
+        'api_allow_morph_binding' => false,
     ],
 
     'redirects' => [
@@ -43,6 +46,7 @@ return [
         'preserve_query' => env('LAZY_SEO_REDIRECTS_PRESERVE_QUERY', true),
         'regex_enabled' => env('LAZY_SEO_REDIRECTS_REGEX_ENABLED', true),
         'wildcard_enabled' => env('LAZY_SEO_REDIRECTS_WILDCARD_ENABLED', true),
+        'cache_seconds' => (int) env('LAZY_SEO_REDIRECTS_CACHE_SECONDS', 60),
         'allowed_status_codes' => [301, 302, 307, 308, 410],
     ],
 

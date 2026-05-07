@@ -5,23 +5,27 @@ namespace Step2dev\LazySeoTools\Tests;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Step2dev\LazySeoTools\LazySeoServiceProvider;
 
-class TestCase extends Orchestra
+abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
-        return [LazySeoServiceProvider::class];
+        return [
+            LazySeoServiceProvider::class,
+        ];
     }
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
             'driver' => 'sqlite',
             'database' => ':memory:',
             'prefix' => '',
         ]);
-        $app['config']->set('app.url', 'https://example.com');
+
+        $app['config']->set('lazy-seo.routes.api', true);
+        $app['config']->set('lazy-seo.routes.web', true);
+        $app['config']->set('lazy-seo.routes.api_middleware', ['api']);
     }
 
     protected function defineDatabaseMigrations(): void

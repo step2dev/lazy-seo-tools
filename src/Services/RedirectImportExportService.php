@@ -55,7 +55,10 @@ class RedirectImportExportService
                 continue;
             }
 
-            $existing = SeoRedirect::query()->where('old_url', $payload['old_url'])->first();
+            $existing = SeoRedirect::query()
+                ->where('normalized_old_url_hash', sha1(SeoRedirect::normalizePath($payload['old_url'])))
+                ->orWhere('old_url', $payload['old_url'])
+                ->first();
 
             if ($existing && $updateExisting) {
                 $existing->update($payload);

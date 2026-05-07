@@ -72,7 +72,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        $this->app->singleton(SeoManager::class);
+        $this->app->scoped(SeoManager::class);
         $this->app->alias(SeoManager::class, SeoResolver::class);
         $this->app->alias(SeoManager::class, 'lazy-seo');
         $this->app->alias(SeoManager::class, 'lazy-seo-manager');
