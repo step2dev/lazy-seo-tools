@@ -3,6 +3,7 @@
 namespace Step2dev\LazySeoTools\Concerns;
 
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Step2dev\LazySeoTools\Data\SeoData;
 use Step2dev\LazySeoTools\Models\Seo;
 
 trait HasSeo
@@ -12,11 +13,14 @@ trait HasSeo
         return $this->morphOne(Seo::class, 'seoable');
     }
 
+    public function resolvedSeo(array $overrides = []): SeoData
+    {
+        return app('lazy-seo')->resolve(model: $this, overrides: $overrides);
+    }
+
     public function seoData(array $overrides = []): array
     {
-        $seo = app('lazy-seo')->forModel($this);
-
-        return app('lazy-seo')->toArray($seo, $overrides);
+        return $this->resolvedSeo($overrides)->toArray();
     }
 
     public function updateSeo(array $attributes): Seo

@@ -47,6 +47,10 @@ return [
         'default_priority' => (float) env('LAZY_SEO_SITEMAP_PRIORITY', 0.8),
     ],
 
+    'cache' => [
+        'resolved_minutes' => env('LAZY_SEO_RESOLVED_CACHE_MINUTES', 0),
+    ],
+
     'templates' => [
         'enabled' => env('LAZY_SEO_TEMPLATES_ENABLED', true),
         'default' => env('LAZY_SEO_DEFAULT_TEMPLATE', null),

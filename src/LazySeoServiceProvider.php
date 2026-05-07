@@ -8,10 +8,10 @@ use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Step2dev\LazySeoTools\Commands\GenerateSitemapCommand;
 use Step2dev\LazySeoTools\Commands\LazySeoCommand;
-use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
 use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
+use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Services\CanonicalService;
 use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\OGImageService;
@@ -23,6 +23,7 @@ use Step2dev\LazySeoTools\View\Components\JsonLdComponent;
 use Step2dev\LazySeoTools\View\Components\MetaComponent;
 use Step2dev\LazySeoTools\View\Components\OgComponent;
 use Step2dev\LazySeoTools\View\Components\TitleComponent;
+use Step2dev\LazySeoTools\View\Components\TwitterComponent;
 
 class LazySeoServiceProvider extends PackageServiceProvider
 {
@@ -65,6 +66,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
         Blade::component('lazy-seo-title', TitleComponent::class);
         Blade::component('lazy-seo-jsonld', JsonLdComponent::class);
         Blade::component('lazy-seo-og', OgComponent::class);
+        Blade::component('lazy-seo-twitter', TwitterComponent::class);
 
         if (class_exists(Livewire::class)) {
             Livewire::component('lazy-seo-form', SeoForm::class);

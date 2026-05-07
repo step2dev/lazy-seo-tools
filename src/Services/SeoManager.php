@@ -3,6 +3,7 @@
 namespace Step2dev\LazySeoTools\Services;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\HtmlString;
 use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Data\SeoData;
@@ -27,7 +28,9 @@ class SeoManager extends SeoService implements SeoResolver
 
     public function forUrl(string $url): Seo
     {
-        return Seo::query()->forUrl($url)->first() ?: $this->fallbackSeo(['url' => $url]);
+        $cacheKey = $this->cacheKey('url', $url);
+
+        return $this->remember($cacheKey, fn (): Seo => Seo::query()->forUrl($url)->first() ?: $this->fallbackSeo(['url' => $url]));
     }
 
     public function getSeoForUrl(string $url): Seo
@@ -37,15 +40,21 @@ class SeoManager extends SeoService implements SeoResolver
 
     public function forModel(Model $model): Seo
     {
-        if (method_exists($model, 'seo') && $model->relationLoaded('seo')) {
+        if (! method_exists($model, 'seo')) {
+            return $this->fallbackSeo();
+        }
+
+        if ($model->relationLoaded('seo')) {
             return $model->seo ?: $this->fallbackSeo();
         }
 
-        if (method_exists($model, 'seo')) {
-            return $model->seo()->first() ?: $this->fallbackSeo();
+        $key = $model->getKey();
+
+        if (! $key) {
+            return $this->fallbackSeo();
         }
 
-        return $this->fallbackSeo();
+        return $this->remember($this->cacheKey('model', $model::class.':'.$key), fn (): Seo => $model->seo()->first() ?: $this->fallbackSeo());
     }
 
     public function current(): Seo
@@ -53,11 +62,30 @@ class SeoManager extends SeoService implements SeoResolver
         return $this->forUrl(request()->path());
     }
 
+    public function resolve(?Model $model = null, ?string $url = null, array $overrides = []): SeoData
+    {
+        $data = SeoData::defaults();
+
+        // Priority: config defaults -> route/url SEO -> model SEO -> template/fluent/manual overrides.
+        if ($url !== null) {
+            $data = $data->merge($this->toDataArray($this->forUrl($url)));
+        }
+
+        if ($model !== null) {
+            $data = $data->merge($this->toDataArray($this->forModel($model)));
+        }
+
+        $data = $data->merge($this->normalizeKeys($this->fluent));
+        $data = $data->merge($this->normalizeKeys($overrides));
+
+        $this->resolvedData = $data;
+
+        return $data;
+    }
+
     public function make(array $attributes = []): SeoData
     {
-        $this->resolvedData = $this->data(null, $attributes);
-
-        return $this->resolvedData;
+        return $this->resolve(overrides: $attributes);
     }
 
     public function title(string $title): self
@@ -84,7 +112,6 @@ class SeoManager extends SeoService implements SeoResolver
     public function canonical(string $url): self
     {
         $this->fluent['canonicalUrl'] = $url;
-        $this->fluent['canonical_url'] = $url;
 
         return $this;
     }
@@ -136,21 +163,7 @@ class SeoManager extends SeoService implements SeoResolver
             return $this;
         }
 
-        $locale = app()->getLocale();
-
-        foreach (['title', 'description', 'keywords'] as $field) {
-            $value = $template->getTranslation($field, $locale, false);
-
-            if (is_string($value) && $value !== '') {
-                $this->fluent[$field] = $this->replacePlaceholders($value, $context);
-            }
-        }
-
-        foreach ((array) $template->payload as $key => $value) {
-            if (is_scalar($value)) {
-                $this->fluent[$key] = $this->replacePlaceholders((string) $value, $context);
-            }
-        }
+        $this->fluent = array_replace($this->fluent, $this->templateToArray($template, $context));
 
         return $this;
     }
@@ -165,9 +178,14 @@ class SeoManager extends SeoService implements SeoResolver
 
     public function data(?Seo $seo = null, array $overrides = []): SeoData
     {
-        $overrides = $this->normalizeKeys(array_replace($this->fluent, $overrides));
+        if ($seo !== null) {
+            $data = SeoData::fromSeo($seo)->merge($this->normalizeKeys($this->fluent))->merge($this->normalizeKeys($overrides));
+            $this->resolvedData = $data;
 
-        return SeoData::fromSeo($seo ?? $this->current(), $overrides);
+            return $data;
+        }
+
+        return $this->resolve(overrides: $overrides);
     }
 
     public function toArray(?Seo $seo = null, array $overrides = []): array
@@ -177,14 +195,13 @@ class SeoManager extends SeoService implements SeoResolver
 
     public function render(?Seo $seo = null, array $overrides = []): HtmlString
     {
-        $data = $this->resolvedData ?: $this->data($seo, $overrides);
-        $robots = implode(', ', $data->robots);
+        $data = $seo || $overrides ? $this->data($seo, $overrides) : ($this->resolvedData ?: $this->data());
 
-        $tags = array_filter([
+        return new HtmlString(implode("\n", array_filter([
             '<title>'.e($data->title).'</title>',
             '<meta name="description" content="'.e($data->description).'">',
             $data->keywords !== '' ? '<meta name="keywords" content="'.e($data->keywords).'">' : null,
-            '<meta name="robots" content="'.e($robots).'">',
+            '<meta name="robots" content="'.e($data->robotsContent()).'">',
             $data->canonicalUrl ? '<link rel="canonical" href="'.e($data->canonicalUrl).'">' : null,
             '<meta property="og:title" content="'.e($data->title).'">',
             '<meta property="og:description" content="'.e($data->description).'">',
@@ -194,9 +211,8 @@ class SeoManager extends SeoService implements SeoResolver
             '<meta name="twitter:card" content="summary_large_image">',
             '<meta name="twitter:title" content="'.e($data->title).'">',
             '<meta name="twitter:description" content="'.e($data->description).'">',
-        ]);
-
-        return new HtmlString(implode("\n", $tags));
+            $data->image ? '<meta name="twitter:image" content="'.e($data->image).'">' : null,
+        ])));
     }
 
     public function renderMetaTags(?Seo $seo = null, array $overrides = []): HtmlString
@@ -210,6 +226,33 @@ class SeoManager extends SeoService implements SeoResolver
             'indexable' => true,
             'robots' => config('lazy-seo.defaults.robots', ['index', 'follow']),
         ], $attributes));
+    }
+
+    protected function toDataArray(Seo $seo): array
+    {
+        return SeoData::fromSeo($seo)->toArray();
+    }
+
+    protected function templateToArray(SeoTemplate $template, array $context): array
+    {
+        $locale = app()->getLocale();
+        $data = [];
+
+        foreach (['title', 'description', 'keywords'] as $field) {
+            $value = $template->getTranslation($field, $locale, false);
+
+            if (is_string($value) && $value !== '') {
+                $data[$field] = $this->replacePlaceholders($value, $context);
+            }
+        }
+
+        foreach ((array) $template->payload as $key => $value) {
+            if (is_scalar($value)) {
+                $data[$key] = $this->replacePlaceholders((string) $value, $context);
+            }
+        }
+
+        return $this->normalizeKeys($data);
     }
 
     protected function replacePlaceholders(string $value, array $context): string
@@ -235,6 +278,22 @@ class SeoManager extends SeoService implements SeoResolver
             unset($data['canonical_url']);
         }
 
-        return $data;
+        return array_filter($data, static fn (mixed $value): bool => $value !== null);
+    }
+
+    protected function remember(string $key, callable $callback): mixed
+    {
+        $minutes = (int) config('lazy-seo.cache.resolved_minutes', 0);
+
+        if ($minutes <= 0) {
+            return $callback();
+        }
+
+        return Cache::remember($key, now()->addMinutes($minutes), $callback);
+    }
+
+    protected function cacheKey(string $type, string $value): string
+    {
+        return 'lazy-seo.resolved.'.sha1($type.':'.$value.':'.app()->getLocale());
     }
 }

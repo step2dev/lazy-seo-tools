@@ -27,6 +27,7 @@ it('supports gone redirects', function () {
     $this->get('/removed')->assertGone();
 });
 
+
 it('tracks redirect hits', function () {
     Route::middleware(HandleSeoRedirects::class)->get('/track-old', fn () => 'old');
 

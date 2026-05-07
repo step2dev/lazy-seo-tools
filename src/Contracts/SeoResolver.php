@@ -15,6 +15,8 @@ interface SeoResolver
 
     public function current(): Seo;
 
+    public function resolve(?Model $model = null, ?string $url = null, array $overrides = []): SeoData;
+
     public function data(?Seo $seo = null, array $overrides = []): SeoData;
 
     public function renderMetaTags(?Seo $seo = null, array $overrides = []): HtmlString;

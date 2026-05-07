@@ -15,54 +15,94 @@ final readonly class SeoData
         public array $robots = ['index', 'follow'],
         public ?string $image = null,
         public string $type = 'website',
+        public array $extra = [],
     ) {}
+
+    public static function defaults(array $overrides = []): self
+    {
+        $defaults = config('lazy-seo.defaults', []);
+
+        return self::fromArray(array_replace([
+            'url' => request()?->fullUrl() ?? url('/'),
+            'title' => (string) ($defaults['title'] ?? config('app.name', 'Laravel')),
+            'description' => (string) ($defaults['description'] ?? ''),
+            'keywords' => (string) ($defaults['keywords'] ?? ''),
+            'canonicalUrl' => $defaults['canonical_url'] ?? null,
+            'robots' => $defaults['robots'] ?? ['index', 'follow'],
+            'image' => $defaults['image'] ?? null,
+            'type' => (string) ($defaults['type'] ?? 'website'),
+        ], self::normalizeKeys($overrides)));
+    }
 
     public static function fromSeo(?Seo $seo = null, array $overrides = []): self
     {
+        if (! $seo) {
+            return self::defaults($overrides);
+        }
+
         $locale = app()->getLocale();
         $defaults = config('lazy-seo.defaults', []);
-
-        $robots = $seo?->indexable !== false
-            ? ($seo?->robots ?: ($defaults['robots'] ?? ['index', 'follow']))
+        $robots = $seo->indexable !== false
+            ? ($seo->robots ?: ($defaults['robots'] ?? ['index', 'follow']))
             : ['noindex', 'nofollow'];
 
-        $data = [
-            'url' => request()?->fullUrl() ?? url('/'),
-            'title' => self::translated($seo, 'title', $locale) ?: (string) ($defaults['title'] ?? config('app.name')),
-            'description' => self::translated($seo, 'description', $locale) ?: (string) ($defaults['description'] ?? ''),
-            'keywords' => self::translated($seo, 'keywords', $locale) ?: (string) ($defaults['keywords'] ?? ''),
-            'canonicalUrl' => $seo?->canonical_url ?: ($defaults['canonical_url'] ?? null),
+        return self::defaults(array_replace([
+            'url' => $seo->url ?: (request()?->fullUrl() ?? url('/')),
+            'title' => self::translated($seo, 'title', $locale) ?: null,
+            'description' => self::translated($seo, 'description', $locale) ?: null,
+            'keywords' => self::translated($seo, 'keywords', $locale) ?: null,
+            'canonicalUrl' => $seo->canonical_url,
             'robots' => $robots,
-            'image' => $defaults['image'] ?? null,
-            'type' => (string) ($defaults['type'] ?? 'website'),
-        ];
+        ], self::normalizeKeys($overrides)));
+    }
 
-        $data = array_replace($data, array_filter($overrides, static fn (mixed $value): bool => $value !== null));
+    public static function fromArray(array $data): self
+    {
+        $data = self::normalizeKeys($data);
+        $known = ['url', 'title', 'description', 'keywords', 'canonicalUrl', 'robots', 'image', 'type'];
+        $extra = array_diff_key($data, array_flip($known));
 
         return new self(
-            url: (string) $data['url'],
-            title: (string) $data['title'],
-            description: (string) $data['description'],
-            keywords: (string) $data['keywords'],
-            canonicalUrl: $data['canonicalUrl'] ? (string) $data['canonicalUrl'] : null,
-            robots: array_values((array) $data['robots']),
-            image: $data['image'] ? (string) $data['image'] : null,
-            type: (string) $data['type'],
+            url: (string) ($data['url'] ?? (request()?->fullUrl() ?? url('/'))),
+            title: (string) ($data['title'] ?? config('app.name', 'Laravel')),
+            description: (string) ($data['description'] ?? ''),
+            keywords: is_array($data['keywords'] ?? null) ? implode(', ', $data['keywords']) : (string) ($data['keywords'] ?? ''),
+            canonicalUrl: filled($data['canonicalUrl'] ?? null) ? (string) $data['canonicalUrl'] : null,
+            robots: array_values(array_filter((array) ($data['robots'] ?? ['index', 'follow']))),
+            image: filled($data['image'] ?? null) ? (string) $data['image'] : null,
+            type: (string) ($data['type'] ?? 'website'),
+            extra: $extra,
         );
+    }
+
+    public function merge(array $overrides): self
+    {
+        return self::fromArray(array_replace($this->toArray(), self::normalizeKeys($overrides)));
+    }
+
+    public function with(array $overrides): self
+    {
+        return $this->merge($overrides);
     }
 
     public function toArray(): array
     {
-        return [
+        return array_replace([
             'url' => $this->url,
             'title' => $this->title,
             'description' => $this->description,
             'keywords' => $this->keywords,
             'canonical_url' => $this->canonicalUrl,
+            'canonicalUrl' => $this->canonicalUrl,
             'robots' => $this->robots,
             'image' => $this->image,
             'type' => $this->type,
-        ];
+        ], $this->extra);
+    }
+
+    public function robotsContent(): string
+    {
+        return implode(', ', $this->robots);
     }
 
     private static function translated(?Seo $seo, string $field, string $locale): string
@@ -74,5 +114,15 @@ final readonly class SeoData
         $value = $seo->getTranslation($field, $locale, false);
 
         return is_string($value) ? $value : '';
+    }
+
+    private static function normalizeKeys(array $data): array
+    {
+        if (array_key_exists('canonical_url', $data)) {
+            $data['canonicalUrl'] = $data['canonical_url'];
+            unset($data['canonical_url']);
+        }
+
+        return array_filter($data, static fn (mixed $value): bool => $value !== null);
     }
 }
