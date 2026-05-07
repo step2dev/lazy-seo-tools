@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schedule;
 use Livewire\Livewire;
@@ -145,21 +146,23 @@ class LazySeoServiceProvider extends PackageServiceProvider
             });
         }
 
-        if ($this->livewireAvailable()) {
+        if ($this->featureEnabled('livewire') && class_exists(Livewire::class)) {
+            $this->registerLivewireComponents();
+        }
+    }
+
+    protected function registerLivewireComponents(): void
+    {
+        try {
             Livewire::component('lazy-seo-form', SeoForm::class);
             Livewire::component('lazy-seo-analyzer', SeoAnalyzerLivewire::class);
             Livewire::component('lazy-seo-redirect-table', RedirectTable::class);
             Livewire::component('lazy-seo-monitoring-dashboard', SeoMonitoringDashboard::class);
             Livewire::component('lazy-seo-issues-table', SeoIssuesTable::class);
             Livewire::component('lazy-seo-scan-detail', SeoScanDetail::class);
+        } catch (BindingResolutionException) {
+            return;
         }
-    }
-
-    protected function livewireAvailable(): bool
-    {
-        return $this->featureEnabled('livewire')
-            && class_exists(Livewire::class)
-            && $this->app->bound('livewire');
     }
 
     protected function featureEnabled(string $feature): bool
