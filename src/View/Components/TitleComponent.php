@@ -2,16 +2,24 @@
 
 namespace Step2dev\LazySeoTools\View\Components;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
+use Step2dev\LazySeoTools\Models\Seo;
 
 class TitleComponent extends Component
 {
-    public function __construct(public ?string $title = null) {}
+    public function __construct(
+        public ?Seo $seo = null,
+        public array $overrides = [],
+        public ?string $title = null,
+    ) {
+        if ($title !== null) {
+            $this->overrides['title'] = $title;
+        }
+    }
 
-    public function render()
+    public function render(): View
     {
-        return view('lazy-seo::components.title', [
-            'title' => $this->title ?? config('lazy-seo.defaults.title', config('app.name')),
-        ]);
+        return view('lazy-seo::components.title');
     }
 }

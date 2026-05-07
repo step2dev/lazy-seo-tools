@@ -6,18 +6,15 @@ use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 use Step2dev\LazySeoTools\Models\Seo;
 
-class OgComponent extends Component
+class MetaComponent extends Component
 {
     public function __construct(
         public ?Seo $seo = null,
         public array $overrides = [],
-        public array $data = [],
-    ) {
-        $this->overrides = array_replace($this->data, $this->overrides);
-    }
+    ) {}
 
     public function render(): View
     {
-        return view('lazy-seo::components.og');
+        return view('lazy-seo::components.meta');
     }
 }

@@ -8,13 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('seo', function (Blueprint $table) {
+        Schema::create(config('lazy-seo.tables.seo', 'seo'), function (Blueprint $table) {
             $table->id();
-            $table->string('url')->nullable()->index();
+            $table->string('url', 2048)->nullable()->index();
             $table->json('title')->nullable();
             $table->json('description')->nullable();
             $table->json('keywords')->nullable();
-            $table->string('canonical_url')->nullable();
+            $table->string('canonical_url', 2048)->nullable();
             $table->json('robots')->nullable();
             $table->boolean('indexable')->default(true)->index();
             $table->nullableMorphs('seoable');
@@ -26,6 +26,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('seo');
+        Schema::dropIfExists(config('lazy-seo.tables.seo', 'seo'));
     }
 };

@@ -5,10 +5,12 @@ Laravel SEO package built on `spatie/laravel-package-tools`.
 ## Features
 
 - SEO records for URLs and Eloquent models
+- Configurable table names without `env()`
 - Translatable title, description and keywords via `spatie/laravel-translatable`
-- Meta tags rendering through `Seo` / `LazySeo` facades
+- Meta tags rendering through `Seo` / `LazySeo` facades and `seo()` helper
 - `HasSeo` trait for models
 - SEO redirects middleware with exact and wildcard redirects
+- Redirect hit counter and loop protection
 - Sitemap generation via `spatie/laravel-sitemap`
 - Blade components
 - Optional Livewire components
@@ -36,19 +38,37 @@ The package provider is `Step2dev\LazySeoTools\LazySeoServiceProvider` and is re
 ```php
 // config/lazy-seo.php
 return [
+    'tables' => [
+        'seo' => 'seo',
+        'seo_redirects' => 'seo_redirects',
+        'seo_templates' => 'seo_templates',
+    ],
+
     'defaults' => [
-        'title' => env('LAZY_SEO_TITLE', config('app.name')),
-        'description' => env('LAZY_SEO_DESCRIPTION', ''),
-        'keywords' => env('LAZY_SEO_KEYWORDS', ''),
+        'title' => config('app.name'),
+        'description' => '',
+        'keywords' => '',
         'robots' => ['index', 'follow'],
     ],
 
     'routes' => [
-        'web' => env('LAZY_SEO_WEB_ROUTES', false),
-        'api' => env('LAZY_SEO_API_ROUTES', false),
-        'api_prefix' => env('LAZY_SEO_API_PREFIX', 'seo'),
+        'web' => false,
+        'api' => false,
+        'api_prefix' => 'seo',
     ],
 ];
+```
+
+Table names are changed directly in the published config. No `env()` is used for table names because migrations and `config:cache` must stay deterministic.
+
+Example:
+
+```php
+'tables' => [
+    'seo' => 'custom_seo',
+    'seo_redirects' => 'custom_seo_redirects',
+    'seo_templates' => 'custom_seo_templates',
+],
 ```
 
 API and web routes are disabled by default.
@@ -105,12 +125,28 @@ With overrides:
 {!! Seo::renderMetaTags(overrides: ['image' => asset('og/post.png')]) !!}
 ```
 
+Fluent helper:
+
+```php
+seo()
+    ->title('Custom title')
+    ->description('Custom description')
+    ->image(asset('og.png'));
+```
+
 ## Blade components
 
 ```blade
+<x-lazy-seo-meta />
 <x-lazy-seo-title title="Custom title" />
-<x-lazy-seo-og :data="['image' => asset('og.png')]" />
+<x-lazy-seo-og :overrides="['image' => asset('og.png')]" />
 <x-lazy-seo-jsonld :data="['title' => 'Page title']" />
+```
+
+The package also registers the `seo` view namespace, so anonymous components work too:
+
+```blade
+<x-seo::meta />
 ```
 
 ## Redirect middleware
@@ -152,7 +188,7 @@ SeoRedirect::create([
 
 ## Sitemap
 
-Generate sitemap from `seo` table records where `url` is present and `indexable = true`:
+Generate sitemap from configured SEO table records where `url` is present and `indexable = true`:
 
 ```bash
 php artisan lazy-seo:sitemap

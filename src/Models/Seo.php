@@ -21,8 +21,6 @@ class Seo extends Model
 {
     use HasTranslations;
 
-    protected $table = 'seo';
-
     public array $translatable = [
         'title',
         'description',
@@ -49,6 +47,11 @@ class Seo extends Model
         'indexable' => 'bool',
     ];
 
+    public function getTable(): string
+    {
+        return config('lazy-seo.tables.seo', 'seo');
+    }
+
     public function seoable(): MorphTo
     {
         return $this->morphTo();
@@ -56,15 +59,20 @@ class Seo extends Model
 
     public function scopeForUrl(Builder $builder, string $url): Builder
     {
-        $normalized = '/'.ltrim(parse_url($url, PHP_URL_PATH) ?: $url, '/');
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+        $normalized = '/'.ltrim($path, '/');
 
-        return $builder->whereIn('url', [$url, $normalized, ltrim($normalized, '/')]);
+        return $builder->whereIn('url', array_values(array_unique([
+            $url,
+            $normalized,
+            ltrim($normalized, '/'),
+        ])));
     }
 
     public function scopeSearch(Builder $builder, ?string $search): Builder
     {
-        return $builder->when($search, function (Builder $query, string $search) {
-            $query->where(function (Builder $q) use ($search) {
+        return $builder->when($search, function (Builder $query, string $search): void {
+            $query->where(function (Builder $q) use ($search): void {
                 $q
                     ->where('title', 'like', '%'.$search.'%')
                     ->orWhere('description', 'like', '%'.$search.'%')

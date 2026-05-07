@@ -11,6 +11,7 @@ use Step2dev\LazySeoTools\Commands\LazySeoCommand;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
 use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
+use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Services\CanonicalService;
 use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\OGImageService;
@@ -19,6 +20,7 @@ use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
 use Step2dev\LazySeoTools\Services\SeoManager;
 use Step2dev\LazySeoTools\Services\SitemapGeneratorService;
 use Step2dev\LazySeoTools\View\Components\JsonLdComponent;
+use Step2dev\LazySeoTools\View\Components\MetaComponent;
 use Step2dev\LazySeoTools\View\Components\OgComponent;
 use Step2dev\LazySeoTools\View\Components\TitleComponent;
 
@@ -43,6 +45,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         $this->app->singleton(SeoManager::class);
+        $this->app->alias(SeoManager::class, SeoResolver::class);
         $this->app->alias(SeoManager::class, 'lazy-seo');
         $this->app->alias(SeoManager::class, 'lazy-seo-manager');
 
@@ -56,6 +59,9 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'seo');
+
+        Blade::component('lazy-seo-meta', MetaComponent::class);
         Blade::component('lazy-seo-title', TitleComponent::class);
         Blade::component('lazy-seo-jsonld', JsonLdComponent::class);
         Blade::component('lazy-seo-og', OgComponent::class);

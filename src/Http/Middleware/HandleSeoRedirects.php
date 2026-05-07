@@ -4,8 +4,8 @@ namespace Step2dev\LazySeoTools\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Step2dev\LazySeoTools\Models\SeoRedirect;
 use Symfony\Component\HttpFoundation\Response;
+use Step2dev\LazySeoTools\Models\SeoRedirect;
 
 class HandleSeoRedirects
 {
@@ -21,11 +21,13 @@ class HandleSeoRedirects
             return $next($request);
         }
 
+        $this->markHit($redirect);
+
         if ($redirect->status_code === 410) {
             abort(410, 'Gone');
         }
 
-        if (! $redirect->new_url) {
+        if (! $redirect->new_url || $this->isRedirectLoop($redirect->new_url, $request)) {
             return $next($request);
         }
 
@@ -39,6 +41,7 @@ class HandleSeoRedirects
 
         $redirect = SeoRedirect::query()
             ->enabled()
+            ->whereIn('status_code', config('lazy-seo.redirects.allowed_status_codes', [301, 302, 307, 308, 410]))
             ->whereIn('old_url', array_unique($variants))
             ->orderByDesc('id')
             ->first();
@@ -49,9 +52,11 @@ class HandleSeoRedirects
 
         return SeoRedirect::query()
             ->enabled()
+            ->whereIn('status_code', config('lazy-seo.redirects.allowed_status_codes', [301, 302, 307, 308, 410]))
             ->where('old_url', 'like', '%*%')
+            ->orderByDesc('id')
             ->get()
-            ->first(fn (SeoRedirect $item) => $this->wildcardMatches($item->old_url, $path));
+            ->first(fn (SeoRedirect $item): bool => $this->wildcardMatches($item->old_url, $path));
     }
 
     protected function wildcardMatches(string $pattern, string $path): bool
@@ -69,5 +74,22 @@ class HandleSeoRedirects
         }
 
         return $target.(str_contains($target, '?') ? '&' : '?').$request->getQueryString();
+    }
+
+    protected function isRedirectLoop(string $target, Request $request): bool
+    {
+        $targetPath = trim(parse_url($target, PHP_URL_PATH) ?: $target, '/');
+
+        return $targetPath === trim($request->path(), '/');
+    }
+
+    protected function markHit(SeoRedirect $redirect): void
+    {
+        $redirect->newQuery()
+            ->whereKey($redirect->getKey())
+            ->update([
+                'hits' => $redirect->hits + 1,
+                'last_hit_at' => now(),
+            ]);
     }
 }

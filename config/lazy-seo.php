@@ -1,10 +1,25 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Database tables
+    |--------------------------------------------------------------------------
+    |
+    | Change these values directly in the published config file. Do not use env()
+    | here: table names must be stable after config:cache.
+    |
+    */
+    'tables' => [
+        'seo' => 'seo',
+        'seo_redirects' => 'seo_redirects',
+        'seo_templates' => 'seo_templates',
+    ],
+
     'defaults' => [
-        'title' => env('LAZY_SEO_TITLE', config('app.name')),
-        'description' => env('LAZY_SEO_DESCRIPTION', ''),
-        'keywords' => env('LAZY_SEO_KEYWORDS', ''),
+        'title' => config('app.name'),
+        'description' => '',
+        'keywords' => '',
         'canonical_url' => null,
         'robots' => ['index', 'follow'],
         'image' => null,
@@ -18,27 +33,30 @@ return [
     ],
 
     'redirects' => [
-        'enabled' => env('LAZY_SEO_REDIRECTS_ENABLED', true),
-        'preserve_query' => env('LAZY_SEO_REDIRECTS_PRESERVE_QUERY', true),
+        'enabled' => true,
+        'preserve_query' => true,
+        'allowed_status_codes' => [301, 302, 307, 308, 410],
     ],
 
     'sitemap' => [
-        'path' => env('LAZY_SEO_SITEMAP_PATH', 'sitemap.xml'),
+        'path' => 'sitemap.xml',
         'cache_key' => 'lazy-seo.sitemap',
         'cache_minutes' => 60,
+        'default_change_frequency' => 'weekly',
+        'default_priority' => 0.8,
     ],
 
     'og_image' => [
-        'disk' => env('LAZY_SEO_OG_DISK', 'public'),
-        'directory' => env('LAZY_SEO_OG_DIRECTORY', 'og'),
+        'disk' => 'public',
+        'directory' => 'og',
         'width' => 1200,
         'height' => 630,
     ],
 
     'webhooks' => [
-        'seo.created' => env('SEO_WEBHOOK_CREATED'),
-        'seo.updated' => env('SEO_WEBHOOK_UPDATED'),
-        'seo.deleted' => env('SEO_WEBHOOK_DELETED'),
+        'seo.created' => null,
+        'seo.updated' => null,
+        'seo.deleted' => null,
     ],
 
     'ai_token' => env('OPENAI_API_KEY'),

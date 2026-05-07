@@ -8,18 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('seo_templates', function (Blueprint $table) {
+        Schema::create(config('lazy-seo.tables.seo_templates', 'seo_templates'), function (Blueprint $table) {
             $table->id();
-            $table->string('url_pattern');
-            $table->string('title')->nullable();
-            $table->text('description')->nullable();
-            $table->text('keywords')->nullable();
+            $table->string('name')->unique();
+            $table->json('title')->nullable();
+            $table->json('description')->nullable();
+            $table->json('keywords')->nullable();
+            $table->json('payload')->nullable();
+            $table->boolean('enabled')->default(true)->index();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('seo_templates');
+        Schema::dropIfExists(config('lazy-seo.tables.seo_templates', 'seo_templates'));
     }
 };

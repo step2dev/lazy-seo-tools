@@ -26,3 +26,19 @@ it('supports gone redirects', function () {
 
     $this->get('/removed')->assertGone();
 });
+
+
+it('tracks redirect hits', function () {
+    Route::middleware(HandleSeoRedirects::class)->get('/track-old', fn () => 'old');
+
+    $redirect = SeoRedirect::create([
+        'old_url' => 'track-old',
+        'new_url' => '/track-new',
+        'status_code' => 302,
+    ]);
+
+    $this->get('/track-old')->assertRedirect('/track-new');
+
+    expect($redirect->refresh()->hits)->toBe(1)
+        ->and($redirect->last_hit_at)->not->toBeNull();
+});

@@ -27,16 +27,16 @@ class SitemapGeneratorService
             $sitemap->add(
                 Url::create($this->absoluteUrl($loc))
                     ->setLastModificationDate($this->lastModified($item['lastmod'] ?? null))
-                    ->setChangeFrequency($item['freq'] ?? $item['changefreq'] ?? 'weekly')
-                    ->setPriority((float) ($item['priority'] ?? 0.8))
+                    ->setChangeFrequency($item['freq'] ?? $item['changefreq'] ?? config('lazy-seo.sitemap.default_change_frequency', 'weekly'))
+                    ->setPriority((float) ($item['priority'] ?? config('lazy-seo.sitemap.default_priority', 0.8)))
             );
         }
 
         $target = public_path($path);
         $directory = dirname($target);
 
-        if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $directory));
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
         }
 
         $sitemap->writeToFile($target);

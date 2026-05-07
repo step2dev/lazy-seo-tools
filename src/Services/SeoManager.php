@@ -4,10 +4,14 @@ namespace Step2dev\LazySeoTools\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
+use Step2dev\LazySeoTools\Contracts\SeoResolver;
+use Step2dev\LazySeoTools\Data\SeoData;
 use Step2dev\LazySeoTools\Models\Seo;
 
-class SeoManager extends SeoService
+class SeoManager extends SeoService implements SeoResolver
 {
+    protected array $fluent = [];
+
     public function analyze(Seo $seo): array
     {
         return app(SeoAnalyzerService::class)->analyze(
@@ -46,25 +50,94 @@ class SeoManager extends SeoService
         return $this->forUrl(request()->path());
     }
 
+    public function title(string $title): self
+    {
+        $this->fluent['title'] = $title;
+
+        return $this;
+    }
+
+    public function description(string $description): self
+    {
+        $this->fluent['description'] = $description;
+
+        return $this;
+    }
+
+    public function keywords(string|array $keywords): self
+    {
+        $this->fluent['keywords'] = is_array($keywords) ? implode(', ', $keywords) : $keywords;
+
+        return $this;
+    }
+
+    public function canonical(string $url): self
+    {
+        $this->fluent['canonicalUrl'] = $url;
+        $this->fluent['canonical_url'] = $url;
+
+        return $this;
+    }
+
+    public function image(string $url): self
+    {
+        $this->fluent['image'] = $url;
+
+        return $this;
+    }
+
+    public function type(string $type): self
+    {
+        $this->fluent['type'] = $type;
+
+        return $this;
+    }
+
+    public function robots(array $robots): self
+    {
+        $this->fluent['robots'] = $robots;
+
+        return $this;
+    }
+
+    public function reset(): self
+    {
+        $this->fluent = [];
+
+        return $this;
+    }
+
+    public function data(?Seo $seo = null, array $overrides = []): SeoData
+    {
+        $overrides = array_replace($this->fluent, $overrides);
+
+        return SeoData::fromSeo($seo ?? $this->current(), $overrides);
+    }
+
+    public function toArray(?Seo $seo = null, array $overrides = []): array
+    {
+        return $this->data($seo, $overrides)->toArray();
+    }
+
     public function render(?Seo $seo = null, array $overrides = []): HtmlString
     {
-        $data = $this->toArray($seo ?? $this->current(), $overrides);
-        $robots = implode(', ', $data['robots']);
+        $data = $this->data($seo, $overrides);
+        $robots = implode(', ', $data->robots);
 
         $tags = array_filter([
-            '<title>'.e($data['title']).'</title>',
-            '<meta name="description" content="'.e($data['description']).'">',
-            $data['keywords'] !== '' ? '<meta name="keywords" content="'.e($data['keywords']).'">' : null,
+            '<title>'.e($data->title).'</title>',
+            '<meta name="description" content="'.e($data->description).'">',
+            $data->keywords !== '' ? '<meta name="keywords" content="'.e($data->keywords).'">' : null,
             '<meta name="robots" content="'.e($robots).'">',
-            $data['canonical_url'] ? '<link rel="canonical" href="'.e($data['canonical_url']).'">' : null,
-            '<meta property="og:title" content="'.e($data['title']).'">',
-            '<meta property="og:description" content="'.e($data['description']).'">',
-            '<meta property="og:type" content="'.e($data['type']).'">',
-            '<meta property="og:url" content="'.e($data['url']).'">',
-            $data['image'] ? '<meta property="og:image" content="'.e($data['image']).'">' : null,
+            $data->canonicalUrl ? '<link rel="canonical" href="'.e($data->canonicalUrl).'">' : null,
+            '<meta property="og:title" content="'.e($data->title).'">',
+            '<meta property="og:description" content="'.e($data->description).'">',
+            '<meta property="og:type" content="'.e($data->type).'">',
+            '<meta property="og:url" content="'.e($data->url).'">',
+            $data->image ? '<meta property="og:image" content="'.e($data->image).'">' : null,
             '<meta name="twitter:card" content="summary_large_image">',
-            '<meta name="twitter:title" content="'.e($data['title']).'">',
-            '<meta name="twitter:description" content="'.e($data['description']).'">',
+            '<meta name="twitter:title" content="'.e($data->title).'">',
+            '<meta name="twitter:description" content="'.e($data->description).'">',
         ]);
 
         return new HtmlString(implode("\n", $tags));
@@ -75,41 +148,11 @@ class SeoManager extends SeoService
         return $this->render($seo, $overrides);
     }
 
-    public function toArray(Seo $seo, array $overrides = []): array
-    {
-        $locale = app()->getLocale();
-        $defaults = config('lazy-seo.defaults', []);
-
-        $data = [
-            'url' => request()?->fullUrl() ?? url('/'),
-            'title' => $this->translated($seo, 'title', $locale) ?: ($defaults['title'] ?? config('app.name')),
-            'description' => $this->translated($seo, 'description', $locale) ?: ($defaults['description'] ?? ''),
-            'keywords' => $this->translated($seo, 'keywords', $locale) ?: ($defaults['keywords'] ?? ''),
-            'canonical_url' => $seo->canonical_url ?: ($defaults['canonical_url'] ?? null),
-            'robots' => $seo->robots ?: ($defaults['robots'] ?? ['index', 'follow']),
-            'image' => $defaults['image'] ?? null,
-            'type' => $defaults['type'] ?? 'website',
-        ];
-
-        if (! $seo->indexable) {
-            $data['robots'] = ['noindex', 'nofollow'];
-        }
-
-        return array_replace($data, array_filter($overrides, static fn ($value) => $value !== null));
-    }
-
     protected function fallbackSeo(array $attributes = []): Seo
     {
         return new Seo(array_replace([
             'indexable' => true,
             'robots' => config('lazy-seo.defaults.robots', ['index', 'follow']),
         ], $attributes));
-    }
-
-    protected function translated(Seo $seo, string $field, string $locale): string
-    {
-        $value = $seo->getTranslation($field, $locale, false);
-
-        return is_string($value) ? $value : '';
     }
 }

@@ -8,18 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('seo_redirects', function (Blueprint $table) {
+        Schema::create(config('lazy-seo.tables.seo_redirects', 'seo_redirects'), function (Blueprint $table) {
             $table->id();
-            $table->string('old_url')->index();
-            $table->string('new_url')->nullable();
-            $table->unsignedSmallInteger('status_code')->default(301);
+            $table->string('old_url', 2048)->index();
+            $table->string('new_url', 2048)->nullable();
+            $table->unsignedSmallInteger('status_code')->default(301)->index();
             $table->boolean('enabled')->default(true)->index();
+            $table->unsignedBigInteger('hits')->default(0);
+            $table->timestamp('last_hit_at')->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('seo_redirects');
+        Schema::dropIfExists(config('lazy-seo.tables.seo_redirects', 'seo_redirects'));
     }
 };

@@ -41,7 +41,10 @@
         "psr-4": {
             "Step2dev\\LazySeoTools\\": "src/",
             "Step2dev\\LazySeoTools\\Database\\Factories\\": "database/factories/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

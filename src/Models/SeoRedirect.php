@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $new_url
  * @property int $status_code
  * @property bool $enabled
+ * @property int $hits
  */
 class SeoRedirect extends Model
 {
@@ -18,12 +19,21 @@ class SeoRedirect extends Model
         'new_url',
         'status_code',
         'enabled',
+        'hits',
+        'last_hit_at',
     ];
 
     protected $casts = [
         'enabled' => 'bool',
         'status_code' => 'int',
+        'hits' => 'int',
+        'last_hit_at' => 'datetime',
     ];
+
+    public function getTable(): string
+    {
+        return config('lazy-seo.tables.seo_redirects', 'seo_redirects');
+    }
 
     public function scopeEnabled(Builder $builder): Builder
     {
