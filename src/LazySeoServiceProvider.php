@@ -145,7 +145,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
             });
         }
 
-        if ($this->featureEnabled('livewire') && class_exists(Livewire::class)) {
+        if ($this->livewireAvailable()) {
             Livewire::component('lazy-seo-form', SeoForm::class);
             Livewire::component('lazy-seo-analyzer', SeoAnalyzerLivewire::class);
             Livewire::component('lazy-seo-redirect-table', RedirectTable::class);
@@ -153,6 +153,13 @@ class LazySeoServiceProvider extends PackageServiceProvider
             Livewire::component('lazy-seo-issues-table', SeoIssuesTable::class);
             Livewire::component('lazy-seo-scan-detail', SeoScanDetail::class);
         }
+    }
+
+    protected function livewireAvailable(): bool
+    {
+        return $this->featureEnabled('livewire')
+            && class_exists(Livewire::class)
+            && $this->app->bound('livewire');
     }
 
     protected function featureEnabled(string $feature): bool
