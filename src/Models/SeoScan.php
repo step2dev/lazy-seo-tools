@@ -15,6 +15,7 @@ class SeoScan extends Model
     protected $fillable = [
         'start_url',
         'previous_scan_id',
+        'status',
         'score',
         'score_delta',
         'pages_count',
@@ -31,6 +32,8 @@ class SeoScan extends Model
         'regressions',
         'resolved_issues',
         'options',
+        'failure_reason',
+        'started_at',
         'finished_at',
     ];
 
@@ -52,6 +55,7 @@ class SeoScan extends Model
         'regressions' => 'array',
         'resolved_issues' => 'array',
         'options' => 'array',
+        'started_at' => 'datetime',
         'finished_at' => 'datetime',
     ];
 
@@ -73,6 +77,54 @@ class SeoScan extends Model
     public function scopeLatestFirst(Builder $builder): Builder
     {
         return $builder->latest('created_at');
+    }
+
+
+    public function scopePending(Builder $builder): Builder
+    {
+        return $builder->where('status', 'pending');
+    }
+
+    public function scopeRunning(Builder $builder): Builder
+    {
+        return $builder->where('status', 'running');
+    }
+
+    public function scopeCompleted(Builder $builder): Builder
+    {
+        return $builder->where('status', 'completed');
+    }
+
+    public function scopeFailed(Builder $builder): Builder
+    {
+        return $builder->where('status', 'failed');
+    }
+
+    public function markRunning(): bool
+    {
+        return $this->forceFill([
+            'status' => 'running',
+            'failure_reason' => null,
+            'started_at' => now(),
+        ])->save();
+    }
+
+    public function markFailed(string $reason): bool
+    {
+        return $this->forceFill([
+            'status' => 'failed',
+            'failure_reason' => mb_substr($reason, 0, 255),
+            'finished_at' => now(),
+        ])->save();
+    }
+
+    public function markCompleted(): bool
+    {
+        return $this->forceFill([
+            'status' => 'completed',
+            'failure_reason' => null,
+            'finished_at' => now(),
+        ])->save();
     }
 
     public function passed(): bool

@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Step2dev\LazySeoTools\Models\SeoScan;
 use Step2dev\LazySeoTools\Services\SeoMonitoringService;
+use Throwable;
 
 class RunSeoScanJob implements ShouldQueue
 {
@@ -19,18 +20,34 @@ class RunSeoScanJob implements ShouldQueue
 
     public int $tries = 2;
 
-    /** @param array<string, mixed> $options */
+    public int $timeout = 600;
+
     public function __construct(
-        public readonly string $url,
-        public readonly array $options = [],
+        public readonly int $scanId,
     ) {
+        $this->tries = (int) config('lazy-seo.queue.tries', 2);
+        $this->timeout = (int) config('lazy-seo.queue.timeout', 600);
+
+        $connection = config('lazy-seo.queue.connection');
+
+        if (is_string($connection) && $connection !== '') {
+            $this->onConnection($connection);
+        }
+
         $this->onQueue((string) config('lazy-seo.queue.queue', 'default'));
     }
 
-    public function handle(SeoMonitoringService $monitoring): SeoScan
+    public function handle(SeoMonitoringService $monitoring): void
     {
-        return $monitoring->scan($this->url, array_merge($this->options, [
-            'queued' => true,
-        ]));
+        $scan = SeoScan::query()->findOrFail($this->scanId);
+
+        $monitoring->runScan($scan);
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        $scan = SeoScan::query()->find($this->scanId);
+
+        $scan?->markFailed($exception->getMessage());
     }
 }

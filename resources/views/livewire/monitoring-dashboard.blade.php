@@ -23,6 +23,9 @@
             <div style="border:1px solid #dbeafe; border-radius:12px; padding:1rem;"><strong>{{ $noticeIssues }}</strong><br><span>Open notices</span></div>
             <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $ignoredIssues }}</strong><br><span>Ignored</span></div>
             <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $averageScore ?? '—' }}</strong><br><span>Avg score</span></div>
+            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $pendingScans }}</strong><br><span>Pending</span></div>
+            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $runningScans }}</strong><br><span>Running</span></div>
+            <div style="border:1px solid #fee2e2; border-radius:12px; padding:1rem;"><strong>{{ $failedScans }}</strong><br><span>Failed</span></div>
         </div>
 
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem;">
@@ -70,6 +73,7 @@
                     <tr>
                         <th style="padding:.75rem;">Date</th>
                         <th style="padding:.75rem;">URL</th>
+                        <th style="padding:.75rem;">Status</th>
                         <th style="padding:.75rem;">Score</th>
                         <th style="padding:.75rem;">Pages</th>
                         <th style="padding:.75rem;">Issues</th>
@@ -81,7 +85,8 @@
                         <tr style="border-top:1px solid #e2e8f0;">
                             <td style="padding:.75rem; white-space:nowrap;">{{ $scan->created_at?->format('Y-m-d H:i') }}</td>
                             <td style="padding:.75rem; word-break:break-all;">{{ $scan->start_url }}</td>
-                            <td style="padding:.75rem;"><strong>{{ $scan->score }}</strong></td>
+                            <td style="padding:.75rem; white-space:nowrap;">{{ $scan->status }}</td>
+                            <td style="padding:.75rem;"><strong>{{ $scan->status === 'completed' ? $scan->score : '—' }}</strong></td>
                             <td style="padding:.75rem;">{{ $scan->pages_count }}</td>
                             <td style="padding:.75rem;">{{ $scan->issues_count }}</td>
                             <td style="padding:.75rem; text-align:right;"><a href="{{ route('lazy-seo.scans.show', $scan) }}">Open</a></td>

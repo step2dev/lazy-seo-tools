@@ -30,7 +30,11 @@ class SeoDashboardService
             'commonIssueTypes' => $this->commonIssueTypes($latest),
             'topRedirects' => $this->topRedirects(),
             'worstPages' => $this->worstPages($latest),
-            'averageScore' => $scanIds === [] ? null : (int) round(SeoScan::query()->whereIn('id', $scanIds)->avg('score')),
+            'pendingScans' => SeoScan::query()->pending()->count(),
+            'runningScans' => SeoScan::query()->running()->count(),
+            'failedScans' => SeoScan::query()->failed()->count(),
+            'averageScore' => $scanIds === [] ? null : (int) round(SeoScan::query()->whereIn('id', $scanIds)->completed()->avg('score')),
+
         ];
     }
 
@@ -60,6 +64,7 @@ class SeoDashboardService
         return SeoScan::query()
             ->latestFirst()
             ->limit($limit)
+            ->completed()
             ->get(['id', 'score', 'score_delta', 'issues_count', 'created_at'])
             ->reverse()
             ->values();

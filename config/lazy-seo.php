@@ -131,6 +131,8 @@ return [
         'connection' => env('LAZY_SEO_QUEUE_CONNECTION'),
         'queue' => env('LAZY_SEO_QUEUE_NAME', 'default'),
         'chunk_pages' => (int) env('LAZY_SEO_QUEUE_CHUNK_PAGES', 25),
+        'tries' => (int) env('LAZY_SEO_QUEUE_TRIES', 2),
+        'timeout' => (int) env('LAZY_SEO_QUEUE_TIMEOUT', 600),
     ],
 
     'history' => [
@@ -172,6 +174,7 @@ return [
         'enabled' => env('LAZY_SEO_MONITORING_ENABLED', true),
         'url' => env('LAZY_SEO_MONITORING_URL', env('APP_URL')),
         'schedule' => env('LAZY_SEO_MONITORING_SCHEDULE', null),
+        'scheduled_queue' => env('LAZY_SEO_MONITORING_SCHEDULED_QUEUE', false),
         'max_pages' => (int) env('LAZY_SEO_MONITORING_MAX_PAGES', 50),
         'fail_under' => (int) env('LAZY_SEO_MONITORING_FAIL_UNDER', 75),
         'pass_score' => 75,

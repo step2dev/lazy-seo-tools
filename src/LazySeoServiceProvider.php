@@ -113,7 +113,11 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
         if ((bool) config('lazy-seo.monitoring.enabled', true) && config('lazy-seo.monitoring.schedule')) {
             $this->app->booted(function (): void {
-                Schedule::command('lazy-seo:monitor')
+                $command = (bool) config('lazy-seo.monitoring.scheduled_queue', false)
+                    ? 'lazy-seo:monitor --queue'
+                    : 'lazy-seo:monitor';
+
+                Schedule::command($command)
                     ->cron((string) config('lazy-seo.monitoring.schedule'))
                     ->withoutOverlapping();
             });

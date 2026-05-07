@@ -5,6 +5,7 @@ namespace Step2dev\LazySeoTools\Services;
 use Illuminate\Support\Arr;
 use Step2dev\LazySeoTools\Data\CrawlResult;
 use Step2dev\LazySeoTools\Models\SeoScan;
+use Throwable;
 
 class SeoMonitoringService
 {
@@ -14,22 +15,50 @@ class SeoMonitoringService
         protected SeoAuditService $audit,
     ) {}
 
-    public function scan(string $url, array $options = []): SeoScan
+    public function createPendingScan(string $url, array $options = []): SeoScan
     {
-        $result = $this->crawler->crawl($url, $options);
-
-        return $this->store($result, $options);
+        return SeoScan::query()->create([
+            'start_url' => $url,
+            'status' => 'pending',
+            'score' => 0,
+            'score_delta' => 0,
+            'summary' => [],
+            'regressions' => [],
+            'resolved_issues' => [],
+            'options' => $options,
+        ]);
     }
 
-    public function store(CrawlResult $result, array $options = []): SeoScan
+    public function scan(string $url, array $options = []): SeoScan
+    {
+        return $this->runScan($this->createPendingScan($url, $options));
+    }
+
+    public function runScan(SeoScan $scan): SeoScan
+    {
+        $scan->markRunning();
+
+        try {
+            $result = $this->crawler->crawl($scan->start_url, $scan->options ?? []);
+
+            return $this->store($result, $scan->options ?? [], $scan);
+        } catch (Throwable $exception) {
+            $scan->markFailed($exception->getMessage());
+
+            throw $exception;
+        }
+    }
+
+    public function store(CrawlResult $result, array $options = [], ?SeoScan $scan = null): SeoScan
     {
         $issues = $this->audit->issues($result);
         $previous = $this->history->latest($result->startUrl);
         $score = $this->audit->score($issues);
 
-        $scan = SeoScan::query()->create([
+        $attributes = [
             'start_url' => $result->startUrl,
             'previous_scan_id' => $previous?->id,
+            'status' => 'completed',
             'score' => $score,
             'score_delta' => $previous ? $score - $previous->score : 0,
             'pages_count' => count($result->pages),
@@ -44,8 +73,16 @@ class SeoMonitoringService
             'regressions' => [],
             'resolved_issues' => [],
             'options' => $options,
+            'failure_reason' => null,
             'finished_at' => now(),
-        ]);
+        ];
+
+        if ($scan) {
+            $scan->forceFill($attributes)->save();
+            $scan->issues()->delete();
+        } else {
+            $scan = SeoScan::query()->create($attributes);
+        }
 
         foreach ($issues as $issue) {
             $scan->issues()->create($issue);

@@ -37,7 +37,8 @@ class MonitorSeoCommand extends Command
         ], static fn ($value): bool => $value !== null);
 
         if ($this->option('queue')) {
-            $job = new RunSeoScanJob($url, $options);
+            $scan = $monitoring->createPendingScan($url, array_merge($options, ['queued' => true]));
+            $job = new RunSeoScanJob((int) $scan->id);
 
             if ($this->option('connection')) {
                 $job->onConnection((string) $this->option('connection'));
@@ -49,6 +50,8 @@ class MonitorSeoCommand extends Command
 
             dispatch($job);
             $this->components->info('SEO monitoring scan queued.');
+            $this->line('Scan ID: '.$scan->id);
+            $this->line('Status: '.$scan->status);
 
             return self::SUCCESS;
         }
