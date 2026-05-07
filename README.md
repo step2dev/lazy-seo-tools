@@ -114,6 +114,8 @@ The config file is published to:
 config/lazy-seo.php
 ```
 
+The published config is intentionally compact. Advanced defaults for sitemap chunking, audit weights, crawler limits, queue settings and integrations are merged internally, so you only add those keys when your application needs to override them.
+
 ### Table names
 
 Table names are configured directly in the published config file and intentionally do **not** use `env()`.

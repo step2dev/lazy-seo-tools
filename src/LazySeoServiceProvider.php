@@ -79,6 +79,8 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
+        $this->mergeLazySeoDefaults();
+
         $this->app->scoped(SeoManager::class);
         $this->app->alias(SeoManager::class, SeoResolver::class);
         $this->app->alias(SeoManager::class, 'lazy-seo');
@@ -147,5 +149,38 @@ class LazySeoServiceProvider extends PackageServiceProvider
     protected function featureEnabled(string $feature): bool
     {
         return (bool) config("lazy-seo.features.{$feature}", true);
+    }
+
+    protected function mergeLazySeoDefaults(): void
+    {
+        /** @var array<string, mixed> $defaults */
+        $defaults = require __DIR__.'/../config/lazy-seo-defaults.php';
+
+        /** @var array<string, mixed> $published */
+        $published = config('lazy-seo', []);
+
+        config()->set('lazy-seo', $this->mergeMissingConfig($published, $defaults));
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @param  array<string, mixed>  $defaults
+     * @return array<string, mixed>
+     */
+    protected function mergeMissingConfig(array $config, array $defaults): array
+    {
+        foreach ($defaults as $key => $value) {
+            if (! array_key_exists($key, $config)) {
+                $config[$key] = $value;
+
+                continue;
+            }
+
+            if (is_array($config[$key]) && is_array($value)) {
+                $config[$key] = $this->mergeMissingConfig($config[$key], $value);
+            }
+        }
+
+        return $config;
     }
 }

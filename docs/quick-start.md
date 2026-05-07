@@ -101,6 +101,8 @@ Disable modules your application does not use:
 ],
 ```
 
+The published `config/lazy-seo.php` is intentionally compact. Advanced defaults are still available internally, and you can override any nested key by adding it to the published config.
+
 ## Common commands
 
 ```bash

@@ -23,3 +23,9 @@ it('renders meta tags through the helper', function (): void {
 it('publishes package routes when enabled', function (): void {
     $this->get('/lazy-seo/dashboard')->assertOk();
 });
+
+it('merges advanced defaults behind the compact published config', function (): void {
+    expect(config('lazy-seo.audit.severity_weights.error'))->toBe(8)
+        ->and(config('lazy-seo.sitemap.chunk_size'))->toBe(50000)
+        ->and(config('lazy-seo.redirects.allowed_status_codes'))->toBe([301, 302, 307, 308, 410]);
+});
