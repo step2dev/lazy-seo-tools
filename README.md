@@ -6,6 +6,17 @@ Lazy SEO Tools helps you manage page meta, model SEO, redirects, sitemaps, SEO s
 
 Built with `spatie/laravel-package-tools`.
 
+## Documentation
+
+- [Installation](docs/install.md)
+- [Quick start](docs/quick-start.md)
+- [Blade components](docs/blade.md)
+- [Facade and helpers](docs/facade.md)
+- [Livewire components](docs/livewire.md)
+- [Redirects](docs/redirects.md)
+- [Sitemap](docs/sitemap.md)
+- [Advanced features](docs/advanced.md)
+
 ## Requirements
 
 - PHP `^8.2`
@@ -145,9 +156,14 @@ Use feature flags to keep the package light for each application:
     'schema' => true,
     'redirects' => true,
     'sitemap' => true,
-    'monitoring' => false,
+    'crawler' => true,
+    'monitoring' => true,
     'indexnow' => false,
+    'content_intelligence' => true,
+    'og_image' => true,
     'livewire' => false,
+    'admin' => false,
+    'api' => false,
 ],
 ```
 
@@ -177,7 +193,7 @@ Supported component aliases:
 <x-seo::schema type="article" :data="$schema" />
 ```
 
-Package views are loaded under the `lazy-seo` namespace.
+Package views are loaded under the `seo` namespace.
 
 ## Model SEO
 
@@ -543,7 +559,7 @@ php artisan lazy-seo:monitor https://example.com --queue
 Use custom queue connection/name:
 
 ```bash
-php artisan lazy-seo:monitor https://example.com --queue --connection=redis --queue=seo
+php artisan lazy-seo:monitor https://example.com --queue --connection=redis --queue-name=seo
 ```
 
 Fail CI/deployment when score is too low:
@@ -732,6 +748,11 @@ Web routes are disabled by default.
 Enable them in `config/lazy-seo.php`:
 
 ```php
+'features' => [
+    'admin' => true,
+    'livewire' => true,
+],
+
 'routes' => [
     'web' => true,
     'admin_prefix' => 'lazy-seo',
@@ -764,6 +785,10 @@ API routes are disabled by default.
 Enable them in config:
 
 ```php
+'features' => [
+    'api' => true,
+],
+
 'routes' => [
     'api' => true,
     'api_prefix' => 'seo',
@@ -897,6 +922,7 @@ Helpers:
 
 ```php
 seo();
+seo_meta();
 seo_schema('article', []);
 seo_jsonld('article', []);
 ```
