@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Bus;
 use Step2dev\LazySeoTools\Jobs\RunSeoScanJob;
+use Step2dev\LazySeoTools\Models\SeoScan;
 
 it('dispatches queued seo scan job', function (): void {
     Bus::fake();
@@ -12,7 +13,9 @@ it('dispatches queued seo scan job', function (): void {
     ])->assertExitCode(0);
 
     Bus::assertDispatched(RunSeoScanJob::class, function (RunSeoScanJob $job): bool {
-        return $job->url === 'https://example.com/'
-            && ($job->options['max_pages'] ?? null) === 5;
+        $scan = SeoScan::query()->find($job->scanId);
+
+        return $scan?->start_url === 'https://example.com/'
+            && ($scan->options['max_pages'] ?? null) === 5;
     });
 });

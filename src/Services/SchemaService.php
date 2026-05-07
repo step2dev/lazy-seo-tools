@@ -47,7 +47,14 @@ class SchemaService
             'author' => $this->personOrOrganization($data['author'] ?? null),
             'publisher' => $this->organization($data['publisher'] ?? []),
             'mainEntityOfPage' => $data['url'] ?? request()?->fullUrl(),
-        ], $data);
+        ], $data, [
+            'author',
+            'publisher',
+            'headline',
+            'title',
+            'date_published',
+            'date_modified',
+        ]);
     }
 
     public function blogPosting(array $data = []): array
@@ -64,7 +71,15 @@ class SchemaService
             'sku' => $data['sku'] ?? null,
             'brand' => isset($data['brand']) ? $this->organization(['name' => $data['brand']]) : null,
             'offers' => $this->offers($data['offers'] ?? $data),
-        ], $data);
+        ], $data, [
+            'brand',
+            'offers',
+            'title',
+            'price',
+            'price_currency',
+            'priceCurrency',
+            'availability',
+        ]);
     }
 
     public function organization(array $data = []): array
@@ -74,7 +89,7 @@ class SchemaService
             'url' => $data['url'] ?? config('app.url'),
             'logo' => $data['logo'] ?? config('lazy-seo.schema.organization.logo'),
             'sameAs' => $data['same_as'] ?? $data['sameAs'] ?? config('lazy-seo.schema.organization.same_as', []),
-        ], $data);
+        ], $data, ['same_as']);
     }
 
     public function localBusiness(array $data = []): array
@@ -179,9 +194,14 @@ class SchemaService
         return ['@type' => 'Person', 'name' => (string) $value];
     }
 
-    protected function base(string $type, array $schema, array $data = []): array
+    /**
+     * @param  array<int, string>  $consumed
+     */
+    protected function base(string $type, array $schema, array $data = [], array $consumed = []): array
     {
-        unset($data['type'], $data['items'], $data['search_url'], $data['searchUrl']);
+        foreach (array_merge(['type', 'items', 'search_url', 'searchUrl'], $consumed) as $key) {
+            unset($data[$key]);
+        }
 
         return $this->clean(array_replace([
             '@context' => 'https://schema.org',

@@ -10,6 +10,10 @@ use Step2dev\LazySeoTools\Models\Seo;
 
 class SitemapGeneratorService
 {
+    public function __construct(
+        protected UrlNormalizer $urlNormalizer,
+    ) {}
+
     /**
      * @param  array<int, array<string, mixed>>|null  $items
      */
@@ -26,6 +30,7 @@ class SitemapGeneratorService
      */
     public function generateFiles(?array $items = null, ?string $path = null): array
     {
+        $customPath = $path !== null;
         $path ??= config('lazy-seo.sitemap.path', 'sitemap.xml');
         $items ??= $this->items();
 
@@ -59,7 +64,7 @@ class SitemapGeneratorService
             return ['files' => $files];
         }
 
-        $indexPath = $this->normalizeGzipPath(config('lazy-seo.sitemap.index_path', $path), $gzip);
+        $indexPath = $this->normalizeGzipPath($customPath ? $path : config('lazy-seo.sitemap.index_path', $path), $gzip);
         $indexFile = $this->writePublicFile($indexPath, $this->sitemapIndexXml($files), $gzip);
 
         return [
@@ -464,11 +469,7 @@ class SitemapGeneratorService
 
     protected function absoluteUrl(string $url): string
     {
-        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
-            return $url;
-        }
-
-        return url($url);
+        return $this->urlNormalizer->normalize($url, config('app.url')) ?? url($url);
     }
 
     protected function lastModified(mixed $value): Carbon
