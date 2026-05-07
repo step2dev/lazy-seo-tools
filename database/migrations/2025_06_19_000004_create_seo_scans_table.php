@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedInteger('new_issues_count')->default(0);
             $table->unsignedInteger('resolved_issues_count')->default(0);
             $table->unsignedInteger('broken_links_count')->default(0);
+            $table->unsignedInteger('external_broken_links_count')->default(0);
             $table->unsignedInteger('redirect_chains_count')->default(0);
             $table->unsignedInteger('duplicate_titles_count')->default(0);
             $table->unsignedInteger('duplicate_descriptions_count')->default(0);

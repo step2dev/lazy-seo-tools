@@ -67,10 +67,20 @@ class SitemapGeneratorService
      */
     public function cached(?array $items = null, ?string $cacheKey = null, ?int $minutes = null): string
     {
-        $cacheKey ??= config('lazy-seo.sitemap.cache_key', 'lazy-seo.sitemap');
+        $cacheKey ??= $this->cacheKey();
         $minutes ??= (int) config('lazy-seo.sitemap.cache_minutes', 60);
 
         return Cache::remember($cacheKey, now()->addMinutes($minutes), fn () => $this->generate($items));
+    }
+
+    public function clearCache(?string $cacheKey = null): bool
+    {
+        return Cache::forget($cacheKey ?? $this->cacheKey());
+    }
+
+    public function cacheKey(): string
+    {
+        return (string) config('lazy-seo.sitemap.cache_key', 'lazy-seo.sitemap');
     }
 
     /**
@@ -135,12 +145,14 @@ class SitemapGeneratorService
                         continue;
                     }
 
-                    $items[] = [
+                    $items[] = array_filter([
                         'loc' => $loc,
                         'lastmod' => $model->{$sourceConfig['lastmod_column'] ?? 'updated_at'} ?? null,
                         'changefreq' => $sourceConfig['changefreq'] ?? config('lazy-seo.sitemap.default_change_frequency', 'weekly'),
                         'priority' => $sourceConfig['priority'] ?? config('lazy-seo.sitemap.default_priority', 0.8),
-                    ];
+                        'images' => $this->modelImages($model, $sourceConfig),
+                        'alternates' => $this->modelAlternates($model, $sourceConfig),
+                    ], fn (mixed $value): bool => $value !== null && $value !== []);
                 }
             }, $model->getKeyName());
         }
@@ -172,6 +184,47 @@ class SitemapGeneratorService
         return null;
     }
 
+
+    /** @param array<string, mixed> $sourceConfig */
+    protected function modelImages(Model $model, array $sourceConfig): ?array
+    {
+        $callback = $sourceConfig['images'] ?? null;
+
+        if ($callback instanceof \Closure) {
+            return $this->normalizeImages((array) $callback($model));
+        }
+
+        if (is_string($callback) && method_exists($model, $callback)) {
+            return $this->normalizeImages((array) $model->{$callback}());
+        }
+
+        if (method_exists($model, 'getSeoImages')) {
+            return $this->normalizeImages((array) $model->getSeoImages());
+        }
+
+        return null;
+    }
+
+    /** @param array<string, mixed> $sourceConfig */
+    protected function modelAlternates(Model $model, array $sourceConfig): ?array
+    {
+        $callback = $sourceConfig['alternates'] ?? $sourceConfig['hreflang'] ?? null;
+
+        if ($callback instanceof \Closure) {
+            return $this->normalizeAlternates((array) $callback($model));
+        }
+
+        if (is_string($callback) && method_exists($model, $callback)) {
+            return $this->normalizeAlternates((array) $model->{$callback}());
+        }
+
+        if (method_exists($model, 'getSeoAlternates')) {
+            return $this->normalizeAlternates((array) $model->getSeoAlternates());
+        }
+
+        return null;
+    }
+
     /** @param array<int, array<string, mixed>> $items */
     protected function filterItems(array $items): array
     {
@@ -195,6 +248,8 @@ class SitemapGeneratorService
 
             $seen[$absolute] = true;
             $item['loc'] = $absolute;
+            $item['images'] = $this->normalizeImages((array) ($item['images'] ?? []));
+            $item['alternates'] = $this->normalizeAlternates((array) ($item['alternates'] ?? $item['hreflang'] ?? []));
             $filtered[] = $item;
         }
 
@@ -224,15 +279,126 @@ class SitemapGeneratorService
             $xml .= '        <lastmod>'.$this->lastModified($item['lastmod'] ?? null)->toAtomString().'</lastmod>'.PHP_EOL;
             $xml .= '        <changefreq>'.e($item['freq'] ?? $item['changefreq'] ?? config('lazy-seo.sitemap.default_change_frequency', 'weekly')).'</changefreq>'.PHP_EOL;
             $xml .= '        <priority>'.number_format((float) ($item['priority'] ?? config('lazy-seo.sitemap.default_priority', 0.8)), 1, '.', '').'</priority>'.PHP_EOL;
+
+            foreach ((array) ($item['images'] ?? []) as $image) {
+                $xml .= '        <image:image>'.PHP_EOL;
+                $xml .= '            <image:loc>'.e($image['loc']).'</image:loc>'.PHP_EOL;
+
+                if (! empty($image['title'])) {
+                    $xml .= '            <image:title>'.e($image['title']).'</image:title>'.PHP_EOL;
+                }
+
+                if (! empty($image['caption'])) {
+                    $xml .= '            <image:caption>'.e($image['caption']).'</image:caption>'.PHP_EOL;
+                }
+
+                $xml .= '        </image:image>'.PHP_EOL;
+            }
+
+            foreach ((array) ($item['alternates'] ?? []) as $alternate) {
+                $xml .= '        <xhtml:link rel="alternate" hreflang="'.e($alternate['locale']).'" href="'.e($alternate['url']).'" />'.PHP_EOL;
+            }
+
             $xml .= '    </url>';
 
             return $xml;
         }, $items);
 
+        $namespaces = [
+            'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+        ];
+
+        if ($this->hasImages($items)) {
+            $namespaces[] = 'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"';
+        }
+
+        if ($this->hasAlternates($items)) {
+            $namespaces[] = 'xmlns:xhtml="http://www.w3.org/1999/xhtml"';
+        }
+
         return '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL
-            .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'.PHP_EOL
+            .'<urlset '.implode(' ', $namespaces).'>'.PHP_EOL
             .implode(PHP_EOL, $urls).PHP_EOL
             .'</urlset>'.PHP_EOL;
+    }
+
+
+    /** @param array<int, mixed> $images */
+    protected function normalizeImages(array $images): array
+    {
+        $normalized = [];
+
+        foreach ($images as $image) {
+            if (is_string($image)) {
+                $image = ['loc' => $image];
+            }
+
+            if (! is_array($image) || empty($image['loc']) || ! is_string($image['loc'])) {
+                continue;
+            }
+
+            $normalized[] = array_filter([
+                'loc' => $this->absoluteUrl($image['loc']),
+                'title' => isset($image['title']) && is_string($image['title']) ? $image['title'] : null,
+                'caption' => isset($image['caption']) && is_string($image['caption']) ? $image['caption'] : null,
+            ]);
+        }
+
+        return $normalized;
+    }
+
+    /** @param array<int|string, mixed> $alternates */
+    protected function normalizeAlternates(array $alternates): array
+    {
+        $normalized = [];
+
+        foreach ($alternates as $locale => $alternate) {
+            if (is_string($alternate)) {
+                $alternate = ['locale' => is_string($locale) ? $locale : null, 'url' => $alternate];
+            }
+
+            if (! is_array($alternate)) {
+                continue;
+            }
+
+            $locale = $alternate['locale'] ?? $alternate['hreflang'] ?? (is_string($locale) ? $locale : null);
+            $url = $alternate['url'] ?? $alternate['href'] ?? null;
+
+            if (! is_string($locale) || $locale === '' || ! is_string($url) || $url === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'locale' => $locale,
+                'url' => $this->absoluteUrl($url),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    protected function hasImages(array $items): bool
+    {
+        foreach ($items as $item) {
+            if (! empty($item['images'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    protected function hasAlternates(array $items): bool
+    {
+        foreach ($items as $item) {
+            if (! empty($item['alternates'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @param array<int, string> $files */

@@ -11,6 +11,8 @@ class CrawlSiteCommand extends Command
     public $signature = 'lazy-seo:crawl
         {url : Start URL}
         {--max-pages= : Maximum pages to crawl}
+        {--check-external : Check external links with HEAD/GET requests}
+        {--max-external-links= : Maximum external links to check}
         {--output= : Optional JSON report path}';
 
     public $description = 'Crawl a site and generate an SEO scan report.';
@@ -19,12 +21,15 @@ class CrawlSiteCommand extends Command
     {
         $result = $crawler->crawl($this->argument('url'), array_filter([
             'max_pages' => $this->option('max-pages') ? (int) $this->option('max-pages') : null,
+            'check_external_links' => $this->option('check-external') ? true : null,
+            'max_external_links' => $this->option('max-external-links') ? (int) $this->option('max-external-links') : null,
         ], static fn ($value): bool => $value !== null));
 
         $this->components->info('SEO crawl finished.');
         $this->line('Score: '.$result->score().'/100');
         $this->line('Pages: '.count($result->pages));
-        $this->line('Broken links: '.count($result->brokenLinks));
+        $this->line('Broken internal links: '.count($result->brokenLinks));
+        $this->line('Broken external links: '.count($result->externalBrokenLinks));
         $this->line('Redirect chains: '.count($result->redirectChains));
         $this->line('Duplicate titles: '.count($result->duplicateTitles));
 

@@ -9,6 +9,7 @@ final readonly class CrawlResult
         public string $startUrl,
         public array $pages,
         public array $brokenLinks = [],
+        public array $externalBrokenLinks = [],
         public array $redirectChains = [],
         public array $duplicateTitles = [],
         public array $duplicateDescriptions = [],
@@ -20,6 +21,7 @@ final readonly class CrawlResult
     {
         $score = 100;
         $score -= min(25, count($this->brokenLinks) * 5);
+        $score -= min(15, count($this->externalBrokenLinks) * 2);
         $score -= min(15, count($this->redirectChains) * 3);
         $score -= min(20, count($this->duplicateTitles) * 4);
         $score -= min(15, count($this->duplicateDescriptions) * 3);
@@ -41,6 +43,7 @@ final readonly class CrawlResult
             'score' => $this->score(),
             'pages' => array_map(static fn (CrawledPage $page): array => $page->toArray(), $this->pages),
             'broken_links' => $this->brokenLinks,
+            'external_broken_links' => $this->externalBrokenLinks,
             'redirect_chains' => $this->redirectChains,
             'duplicate_titles' => $this->duplicateTitles,
             'duplicate_descriptions' => $this->duplicateDescriptions,

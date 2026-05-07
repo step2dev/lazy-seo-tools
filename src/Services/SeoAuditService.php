@@ -17,6 +17,14 @@ class SeoAuditService
             $issues[] = $this->issue($url, 'broken_link', 'error', 'Broken internal link detected.', ['sources' => array_values((array) $sources)]);
         }
 
+        foreach ($result->externalBrokenLinks as $url => $payload) {
+            $issues[] = $this->issue($url, 'broken_external_link', 'warning', 'Broken external link detected.', [
+                'status' => $payload['status'] ?? null,
+                'error' => $payload['error'] ?? null,
+                'sources' => array_values((array) ($payload['sources'] ?? [])),
+            ]);
+        }
+
         foreach ($result->redirectChains as $url => $chain) {
             $issues[] = $this->issue($url, 'redirect_chain', 'warning', 'Redirect chain detected.', ['chain' => array_values((array) $chain)]);
         }

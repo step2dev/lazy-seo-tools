@@ -11,6 +11,8 @@ class MonitorSeoCommand extends Command
     public $signature = 'lazy-seo:monitor
         {url? : URL to scan. Defaults to lazy-seo.monitoring.url or app.url}
         {--max-pages= : Maximum pages to crawl}
+        {--check-external : Check external links with HEAD/GET requests}
+        {--max-external-links= : Maximum external links to check}
         {--queue : Dispatch scan to queue instead of running synchronously}
         {--queue-name= : Queue name for queued scans}
         {--connection= : Queue connection for queued scans}
@@ -30,6 +32,8 @@ class MonitorSeoCommand extends Command
 
         $options = array_filter([
             'max_pages' => $this->option('max-pages') ? (int) $this->option('max-pages') : null,
+            'check_external_links' => $this->option('check-external') ? true : null,
+            'max_external_links' => $this->option('max-external-links') ? (int) $this->option('max-external-links') : null,
         ], static fn ($value): bool => $value !== null);
 
         if ($this->option('queue')) {
@@ -56,6 +60,8 @@ class MonitorSeoCommand extends Command
         $this->line('Score: '.$scan->score.'/100');
         $this->line('Pages: '.$scan->pages_count);
         $this->line('Issues: '.$scan->issues_count);
+        $this->line('Broken internal links: '.$scan->broken_links_count);
+        $this->line('Broken external links: '.$scan->external_broken_links_count);
         $this->line('Score delta: '.$scan->score_delta);
         $this->line('New issues: '.$scan->new_issues_count);
         $this->line('Resolved issues: '.$scan->resolved_issues_count);

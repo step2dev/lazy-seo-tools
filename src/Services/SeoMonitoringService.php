@@ -35,6 +35,7 @@ class SeoMonitoringService
             'pages_count' => count($result->pages),
             'issues_count' => count($issues),
             'broken_links_count' => count($result->brokenLinks),
+            'external_broken_links_count' => count($result->externalBrokenLinks),
             'redirect_chains_count' => count($result->redirectChains),
             'duplicate_titles_count' => count($result->duplicateTitles),
             'duplicate_descriptions_count' => count($result->duplicateDescriptions),

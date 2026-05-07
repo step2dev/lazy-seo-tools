@@ -19,6 +19,8 @@ class SiteCrawlerService
         $maxPages = (int) ($options['max_pages'] ?? config('lazy-seo.crawler.max_pages', 50));
         $timeout = (int) ($options['timeout'] ?? config('lazy-seo.crawler.timeout', 10));
         $respectNoindex = (bool) ($options['respect_noindex'] ?? config('lazy-seo.crawler.respect_noindex', false));
+        $checkExternalLinks = (bool) ($options['check_external_links'] ?? config('lazy-seo.crawler.check_external_links', false));
+        $maxExternalLinks = (int) ($options['max_external_links'] ?? config('lazy-seo.crawler.max_external_links', 50));
         $userAgent = (string) ($options['user_agent'] ?? config('lazy-seo.crawler.user_agent', 'LazySeoBot/1.0'));
         $exclude = (array) ($options['exclude'] ?? config('lazy-seo.crawler.exclude', []));
 
@@ -27,6 +29,8 @@ class SiteCrawlerService
         $pages = [];
         $incoming = [];
         $brokenLinks = [];
+        $externalBrokenLinks = [];
+        $externalCandidates = [];
         $redirectChains = [];
 
         while ($queue !== [] && count($visited) < $maxPages) {
@@ -59,6 +63,11 @@ class SiteCrawlerService
                 $incoming[$target][] = $url;
 
                 if (! $this->urls->sameHost($target, $startUrl)) {
+                    if ($checkExternalLinks && count($externalCandidates) < $maxExternalLinks) {
+                        $externalCandidates[$target] ??= [];
+                        $externalCandidates[$target][] = $url;
+                    }
+
                     continue;
                 }
 
@@ -76,10 +85,15 @@ class SiteCrawlerService
             }
         }
 
+        if ($checkExternalLinks) {
+            $externalBrokenLinks = $this->checkExternalLinks($externalCandidates, $timeout, $userAgent);
+        }
+
         return new CrawlResult(
             startUrl: $startUrl,
             pages: $pages,
             brokenLinks: $brokenLinks,
+            externalBrokenLinks: $externalBrokenLinks,
             redirectChains: $this->filterRedirectChains($redirectChains),
             duplicateTitles: $this->duplicates($pages, 'title'),
             duplicateDescriptions: $this->duplicates($pages, 'description'),
@@ -97,7 +111,8 @@ class SiteCrawlerService
                 ->get($url);
 
             $html = (string) $response->body();
-            $redirects = (array) ($response->handlerStats()['redirect_url'] ?? []);
+            $redirectUrl = $response->handlerStats()['redirect_url'] ?? null;
+            $redirects = is_string($redirectUrl) && $redirectUrl !== '' ? [$redirectUrl] : [];
 
             if ($redirects === [] && $response->header('X-Guzzle-Redirect-History')) {
                 $redirects = array_filter(array_map('trim', explode(',', (string) $response->header('X-Guzzle-Redirect-History'))));
@@ -248,6 +263,47 @@ class SiteCrawlerService
         }
 
         return false;
+    }
+
+
+    /**
+     * @param  array<string, array<int, string>>  $externalCandidates
+     * @return array<string, array<string, mixed>>
+     */
+    protected function checkExternalLinks(array $externalCandidates, int $timeout, string $userAgent): array
+    {
+        $broken = [];
+
+        foreach ($externalCandidates as $url => $sources) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->withHeaders(['User-Agent' => $userAgent])
+                    ->withOptions(['allow_redirects' => true])
+                    ->head($url);
+
+                if ($response->status() === 405) {
+                    $response = Http::timeout($timeout)
+                        ->withHeaders(['User-Agent' => $userAgent])
+                        ->withOptions(['allow_redirects' => true])
+                        ->get($url);
+                }
+
+                if ($response->status() >= 400) {
+                    $broken[$url] = [
+                        'status' => $response->status(),
+                        'sources' => array_values(array_unique($sources)),
+                    ];
+                }
+            } catch (\Throwable $e) {
+                $broken[$url] = [
+                    'status' => 0,
+                    'error' => $e->getMessage(),
+                    'sources' => array_values(array_unique($sources)),
+                ];
+            }
+        }
+
+        return $broken;
     }
 
     protected function filterRedirectChains(array $chains): array

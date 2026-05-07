@@ -67,7 +67,18 @@ return [
             'telescope/*',
         ],
         'static_urls' => [
-            // ['loc' => '/', 'changefreq' => 'daily', 'priority' => 1.0],
+            // [
+            //     'loc' => '/',
+            //     'changefreq' => 'daily',
+            //     'priority' => 1.0,
+            //     'images' => [
+            //         ['loc' => '/images/home-og.jpg', 'title' => 'Home'],
+            //     ],
+            //     'alternates' => [
+            //         'uk' => '/uk',
+            //         'en' => '/en',
+            //     ],
+            // ],
         ],
         'models' => [
             // App\Models\Post::class => [
@@ -77,6 +88,8 @@ return [
             //     'lastmod_column' => 'updated_at',
             //     'changefreq' => 'weekly',
             //     'priority' => 0.8,
+            //     'images' => 'getSeoImages',
+            //     'alternates' => 'getSeoAlternates',
             // ],
         ],
     ],
@@ -149,6 +162,7 @@ return [
             'noindex' => true,
             'missing_image_alt' => true,
             'broken_link' => true,
+            'broken_external_link' => true,
             'redirect_chain' => true,
             'orphan_page' => true,
         ],
@@ -170,6 +184,8 @@ return [
         'timeout' => (int) env('LAZY_SEO_CRAWLER_TIMEOUT', 10),
         'user_agent' => env('LAZY_SEO_CRAWLER_USER_AGENT', 'LazySeoBot/1.0'),
         'respect_noindex' => env('LAZY_SEO_CRAWLER_RESPECT_NOINDEX', false),
+        'check_external_links' => env('LAZY_SEO_CRAWLER_CHECK_EXTERNAL_LINKS', false),
+        'max_external_links' => (int) env('LAZY_SEO_CRAWLER_MAX_EXTERNAL_LINKS', 50),
         'exclude' => [
             'admin/*',
             'nova/*',

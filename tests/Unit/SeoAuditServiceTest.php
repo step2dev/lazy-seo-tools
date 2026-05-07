@@ -23,6 +23,7 @@ it('creates typed seo audit issues with stable fingerprints', function (): void 
         startUrl: 'https://example.com',
         pages: [$page],
         brokenLinks: ['https://example.com/missing' => ['https://example.com/about']],
+        externalBrokenLinks: ['https://external.test/missing' => ['status' => 404, 'sources' => ['https://example.com/about']]],
     ));
 
     expect(collect($issues)->pluck('type')->all())->toContain(
@@ -32,6 +33,7 @@ it('creates typed seo audit issues with stable fingerprints', function (): void 
         'missing_h1',
         'missing_image_alt',
         'broken_link',
+        'broken_external_link',
     );
 
     foreach ($issues as $issue) {
