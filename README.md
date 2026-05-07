@@ -51,9 +51,11 @@ Render SEO tags in your layout:
 
 ```blade
 <head>
-    {!! seo()->renderMetaTags() !!}
+    {!! seo_meta() !!}
 </head>
 ```
+
+`seo_meta()` is a small helper around `seo()->renderMetaTags()` for the common layout use case.
 
 Set SEO data for the current response:
 
@@ -73,6 +75,16 @@ You can also resolve and render directly:
 $data = seo()->resolve(url: request()->path());
 
 return seo()->renderMetaTags();
+```
+
+One-off render with overrides:
+
+```blade
+{!! seo_meta(overrides: [
+    'title' => 'About us',
+    'description' => 'Learn more about our company.',
+    'canonical_url' => route('about'),
+]) !!}
 ```
 
 ## Configuration
@@ -107,7 +119,7 @@ Runtime settings like routes, sitemap path, crawler limits, queue settings, aler
 ### Render all meta tags
 
 ```blade
-{!! seo()->renderMetaTags() !!}
+{!! seo_meta() !!}
 ```
 
 ### Components

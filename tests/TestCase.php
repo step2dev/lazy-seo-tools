@@ -26,6 +26,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set('lazy-seo.routes.api', true);
         $app['config']->set('lazy-seo.routes.web', true);
         $app['config']->set('lazy-seo.routes.api_middleware', ['api']);
+        $app['config']->set('session.driver', 'array');
     }
 
     protected function defineDatabaseMigrations(): void

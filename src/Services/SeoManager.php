@@ -274,7 +274,10 @@ class SeoManager extends SeoService implements SeoResolver
     protected function normalizeKeys(array $data): array
     {
         if (array_key_exists('canonical_url', $data)) {
-            $data['canonicalUrl'] = $data['canonical_url'];
+            if ($data['canonical_url'] !== null) {
+                $data['canonicalUrl'] = $data['canonical_url'];
+            }
+
             unset($data['canonical_url']);
         }
 

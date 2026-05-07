@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\HtmlString;
+use Step2dev\LazySeoTools\Models\Seo;
 use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\SchemaService;
 use Step2dev\LazySeoTools\Services\SeoManager;
@@ -8,6 +10,13 @@ if (! function_exists('seo')) {
     function seo(): SeoManager
     {
         return app('lazy-seo');
+    }
+}
+
+if (! function_exists('seo_meta')) {
+    function seo_meta(?Seo $seo = null, array $overrides = []): HtmlString
+    {
+        return seo()->renderMetaTags($seo, $overrides);
     }
 }
 
