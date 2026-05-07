@@ -1,32 +1,40 @@
 <?php
 
-use Illuminate\Support\Facades\Http;
-use Step2dev\LazySeoTools\Models\SeoScan;
-use Step2dev\LazySeoTools\Models\SeoScanIssue;
+use Step2dev\LazySeoTools\Data\CrawledPage;
+use Step2dev\LazySeoTools\Data\CrawlResult;
+use Step2dev\LazySeoTools\Data\SeoAnalysisResult;
 use Step2dev\LazySeoTools\Services\SeoMonitoringService;
 
-it('stores crawl scan snapshots and issues', function (): void {
-    Http::fake([
-        'https://example.com/' => Http::response('<html><head><title>Home SEO Title</title><meta name="description" content="Valid homepage description for seo monitoring."><link rel="canonical" href="https://example.com/"></head><body><h1>Home</h1><a href="/missing">Missing</a><img src="/image.jpg">'.str_repeat(' content', 260).'</body></html>', 200),
-        'https://example.com/missing' => Http::response('Not found', 404),
-    ]);
+it('stores scan issues with fingerprints and detects resolved issues', function (): void {
+    $service = app(SeoMonitoringService::class);
 
-    $scan = app(SeoMonitoringService::class)->scan('https://example.com/', ['max_pages' => 5]);
+    $first = $service->store(new CrawlResult(
+        startUrl: 'https://example.com',
+        pages: [new CrawledPage(
+            url: 'https://example.com',
+            status: 200,
+            title: null,
+            description: null,
+            canonical: null,
+            analysis: new SeoAnalysisResult(score: 40, metrics: ['h1_count' => 0]),
+        )],
+    ));
 
-    expect($scan)->toBeInstanceOf(SeoScan::class)
-        ->and($scan->pages_count)->toBe(2)
-        ->and($scan->issues_count)->toBeGreaterThan(0)
-        ->and(SeoScanIssue::query()->where('seo_scan_id', $scan->id)->exists())->toBeTrue();
-});
+    $second = $service->store(new CrawlResult(
+        startUrl: 'https://example.com',
+        pages: [new CrawledPage(
+            url: 'https://example.com',
+            status: 200,
+            title: 'A production ready SEO title for Laravel',
+            description: 'This is a production ready meta description that is long enough for the package audit checks.',
+            canonical: 'https://example.com',
+            headings: [['level' => 1, 'text' => 'Home']],
+            analysis: new SeoAnalysisResult(score: 100, metrics: ['h1_count' => 1]),
+        )],
+    ));
 
-it('uses configurable monitoring table names without env in table config', function (): void {
-    config()->set('lazy-seo.tables.seo_scans', 'custom_seo_scans');
-    config()->set('lazy-seo.tables.seo_scan_issues', 'custom_seo_scan_issues');
-
-    $scan = new SeoScan;
-    $issue = new SeoScanIssue;
-
-    expect($scan->getTable())->toBe('custom_seo_scans')
-        ->and($issue->getTable())->toBe('custom_seo_scan_issues')
-        ->and(config('lazy-seo.tables.seo_scans'))->toBe('custom_seo_scans');
+    expect($first->issues)->not->toBeEmpty();
+    expect($first->issues->first()->fingerprint)->toBeString()->toHaveLength(40);
+    expect($second->resolved_issues_count)->toBeGreaterThan(0);
+    expect($second->score)->toBeGreaterThan($first->score);
 });

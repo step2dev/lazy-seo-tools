@@ -15,10 +15,12 @@ return new class extends Migration
             $table->string('type');
             $table->string('severity')->default('warning');
             $table->string('message');
+            $table->char('fingerprint', 40)->nullable();
             $table->json('context')->nullable();
             $table->timestamps();
 
             $table->index(['type', 'severity']);
+            $table->index('fingerprint');
             $table->index('url');
         });
     }

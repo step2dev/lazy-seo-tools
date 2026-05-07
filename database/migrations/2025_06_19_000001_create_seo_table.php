@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create(config('lazy-seo.tables.seo', 'seo'), function (Blueprint $table) {
             $table->id();
-            $table->string('url', 2048)->nullable()->index();
+            $table->string('url', 2048)->nullable();
+            $table->char('url_hash', 40)->nullable()->index();
             $table->json('title')->nullable();
             $table->json('description')->nullable();
             $table->json('keywords')->nullable();

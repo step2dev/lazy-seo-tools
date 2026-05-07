@@ -5,6 +5,7 @@ namespace Step2dev\LazySeoTools\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -29,6 +30,7 @@ class Seo extends Model
 
     protected $fillable = [
         'url',
+        'url_hash',
         'title',
         'description',
         'keywords',
@@ -44,8 +46,17 @@ class Seo extends Model
         'description' => 'array',
         'keywords' => 'array',
         'robots' => 'array',
+        'url_hash' => 'string',
         'indexable' => 'bool',
     ];
+
+
+    protected static function booted(): void
+    {
+        static::saving(function (Seo $seo): void {
+            $seo->url_hash = $seo->url ? sha1(static::normalizeUrlForLookup($seo->url)) : null;
+        });
+    }
 
     public function getTable(): string
     {
@@ -59,14 +70,35 @@ class Seo extends Model
 
     public function scopeForUrl(Builder $builder, string $url): Builder
     {
-        $path = parse_url($url, PHP_URL_PATH) ?: $url;
-        $normalized = '/'.ltrim($path, '/');
-
-        return $builder->whereIn('url', array_values(array_unique([
+        $candidates = array_values(array_unique([
             $url,
-            $normalized,
-            ltrim($normalized, '/'),
-        ])));
+            static::normalizeUrlForLookup($url),
+            ltrim(static::normalizeUrlForLookup($url), '/'),
+        ]));
+
+        $hashes = array_map(static fn (string $candidate): string => sha1(static::normalizeUrlForLookup($candidate)), $candidates);
+
+        return $builder->where(function (Builder $query) use ($candidates, $hashes): void {
+            $query->whereIn('url_hash', array_values(array_unique($hashes)))
+                ->orWhereIn('url', $candidates);
+        });
+    }
+
+
+    public static function normalizeUrlForLookup(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return '/';
+        }
+
+        $path = parse_url($url, PHP_URL_PATH) ?: $url;
+        $query = parse_url($url, PHP_URL_QUERY);
+        $normalized = '/'.trim($path, '/');
+        $normalized = $normalized === '/' ? '/' : rtrim($normalized, '/');
+
+        return Str::lower($query ? $normalized.'?'.$query : $normalized);
     }
 
     public function scopeSearch(Builder $builder, ?string $search): Builder

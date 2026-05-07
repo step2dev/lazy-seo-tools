@@ -63,7 +63,7 @@ class SeoHistoryService
         return $current->issues()
             ->get()
             ->reject(fn (SeoScanIssue $issue): bool => in_array($this->issueKey($issue), $previousKeys, true))
-            ->map(fn (SeoScanIssue $issue): array => $issue->only(['url', 'type', 'severity', 'message', 'context']))
+            ->map(fn (SeoScanIssue $issue): array => $issue->only(['url', 'type', 'severity', 'message', 'fingerprint', 'context']))
             ->values()
             ->all();
     }
@@ -76,7 +76,7 @@ class SeoHistoryService
         return $previous->issues()
             ->get()
             ->reject(fn (SeoScanIssue $issue): bool => in_array($this->issueKey($issue), $currentKeys, true))
-            ->map(fn (SeoScanIssue $issue): array => $issue->only(['url', 'type', 'severity', 'message', 'context']))
+            ->map(fn (SeoScanIssue $issue): array => $issue->only(['url', 'type', 'severity', 'message', 'fingerprint', 'context']))
             ->values()
             ->all();
     }
@@ -119,11 +119,15 @@ class SeoHistoryService
 
     protected function issueKey(SeoScanIssue $issue): string
     {
-        return implode('|', [
+        if (is_string($issue->fingerprint) && $issue->fingerprint !== '') {
+            return $issue->fingerprint;
+        }
+
+        return sha1(implode('|', [
             (string) $issue->url,
             (string) $issue->type,
             (string) $issue->severity,
             (string) $issue->message,
-        ]);
+        ]));
     }
 }

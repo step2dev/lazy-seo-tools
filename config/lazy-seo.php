@@ -126,6 +126,34 @@ return [
         'store_regressions' => env('LAZY_SEO_HISTORY_STORE_REGRESSIONS', true),
     ],
 
+
+    'audit' => [
+        'severity_weights' => [
+            'error' => 8,
+            'warning' => 4,
+            'notice' => 1,
+        ],
+        'max_score_penalty' => 100,
+        'checks' => [
+            'http_error' => true,
+            'missing_title' => true,
+            'title_length' => true,
+            'duplicate_title' => true,
+            'missing_description' => true,
+            'description_length' => true,
+            'duplicate_description' => true,
+            'missing_h1' => true,
+            'multiple_h1' => true,
+            'missing_canonical' => true,
+            'canonical_conflict' => true,
+            'noindex' => true,
+            'missing_image_alt' => true,
+            'broken_link' => true,
+            'redirect_chain' => true,
+            'orphan_page' => true,
+        ],
+    ],
+
     'monitoring' => [
         'enabled' => env('LAZY_SEO_MONITORING_ENABLED', true),
         'url' => env('LAZY_SEO_MONITORING_URL', env('APP_URL')),

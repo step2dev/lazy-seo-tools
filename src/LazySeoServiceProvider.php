@@ -32,6 +32,7 @@ use Step2dev\LazySeoTools\Services\OgMetaService;
 use Step2dev\LazySeoTools\Services\RedirectImportExportService;
 use Step2dev\LazySeoTools\Services\SchemaService;
 use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
+use Step2dev\LazySeoTools\Services\SeoAuditService;
 use Step2dev\LazySeoTools\Services\SeoHistoryService;
 use Step2dev\LazySeoTools\Services\SeoManager;
 use Step2dev\LazySeoTools\Services\SeoMonitoringService;
@@ -82,6 +83,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->app->singleton(SiteCrawlerService::class);
         $this->app->singleton(RedirectImportExportService::class);
         $this->app->singleton(SeoAnalyzerService::class);
+        $this->app->singleton(SeoAuditService::class);
         $this->app->singleton(SeoMonitoringService::class);
         $this->app->singleton(IndexNowService::class);
         $this->app->singleton(ContentIntelligenceService::class);

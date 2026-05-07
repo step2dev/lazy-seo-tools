@@ -16,6 +16,7 @@ class SeoScanIssue extends Model
         'type',
         'severity',
         'message',
+        'fingerprint',
         'context',
     ];
 
