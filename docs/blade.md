@@ -1,8 +1,8 @@
-## Blade компоненти
+# Blade components
 
 ## Render all tags
 
-Use the helper in your main layout:
+Use the helper in the main layout:
 
 ```blade
 {!! seo_meta() !!}
@@ -14,7 +14,19 @@ Or call the manager directly:
 {!! seo()->renderMetaTags() !!}
 ```
 
+Render once with overrides:
+
+```blade
+{!! seo_meta(overrides: [
+    'title' => 'Contact',
+    'description' => 'Contact our team.',
+    'canonical_url' => route('contact'),
+]) !!}
+```
+
 ## Components
+
+The package registers these Blade component aliases when the relevant feature flags are enabled:
 
 ```blade
 <x-lazy-seo-title title="Home Page" />
@@ -32,12 +44,27 @@ JSON-LD aliases:
 <x-seo::schema type="article" :data="$schema" />
 ```
 
-## Override data in a view
+Package views are loaded under the `seo` namespace.
 
-```blade
-{!! seo_meta(overrides: [
-    'title' => 'Contact',
-    'description' => 'Contact our team.',
-    'canonical_url' => route('contact'),
-]) !!}
+## JSON-LD helpers
+
+Build schema as an array:
+
+```php
+$schema = seo_schema('article', [
+    'title' => $post->title,
+    'description' => $post->excerpt,
+    'image' => $post->cover_url,
+    'url' => route('posts.show', $post),
+]);
 ```
+
+Render a script tag:
+
+```php
+echo seo_jsonld('article', [
+    'title' => $post->title,
+]);
+```
+
+Common schema types include `Article`, `BlogPosting`, `Product`, `Organization`, `LocalBusiness`, `WebSite`, `BreadcrumbList`, `FAQPage` and `WebPage`.

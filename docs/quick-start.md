@@ -1,10 +1,10 @@
 # Quick start
 
-The shortest setup is to render meta tags in your application layout and set SEO data from controllers, Livewire components or route closures.
+The shortest setup is to render meta tags in the application layout and set SEO data from controllers, route closures, Livewire components or view composers.
 
 ## Render tags
 
-Add this to your `<head>`:
+Add this to the layout `<head>`:
 
 ```blade
 {!! seo_meta() !!}
@@ -24,6 +24,7 @@ seo()
     ->description('Simple pricing for your product.')
     ->canonical(route('pricing'))
     ->image(asset('storage/og/pricing.jpg'))
+    ->type('website')
     ->robots(['index', 'follow']);
 ```
 
@@ -35,7 +36,7 @@ seo()->preset('product', $product);
 seo()->preset('homepage');
 ```
 
-You can still override anything at runtime:
+Override preset data at runtime:
 
 ```php
 seo()
@@ -48,7 +49,7 @@ seo()
 
 ## Render one-off tags
 
-Use overrides when you do not need to keep fluent state:
+Use overrides when the view does not need fluent state:
 
 ```blade
 {!! seo_meta(overrides: [
@@ -60,9 +61,10 @@ Use overrides when you do not need to keep fluent state:
 
 ## Model SEO
 
-Add the trait to a model:
+Add the trait to an Eloquent model:
 
 ```php
+use Illuminate\Database\Eloquent\Model;
 use Step2dev\LazySeoTools\Concerns\HasSeo;
 
 class Post extends Model
@@ -75,39 +77,77 @@ Save SEO data:
 
 ```php
 $post->updateSeo([
-    'title' => ['en' => $post->title],
+    'title' => ['en' => $post->title, 'uk' => $post->title_uk],
     'description' => ['en' => $post->excerpt],
+    'keywords' => ['en' => 'laravel, seo'],
     'canonical_url' => route('posts.show', $post),
     'robots' => ['index', 'follow'],
     'indexable' => true,
 ]);
 ```
 
-Resolve it:
+Resolve data:
 
 ```php
 $data = seo()->resolve(model: $post, url: request()->path());
+
+$data->title;
+$data->description;
+$data->robotsContent();
 ```
 
-## Keep it light
-
-Disable modules your application does not use:
+## URL SEO
 
 ```php
-'features' => [
-    'monitoring' => false,
-    'indexnow' => false,
-    'livewire' => false,
-],
+use Step2dev\LazySeoTools\Models\Seo;
+
+Seo::query()->create([
+    'url' => '/pricing',
+    'title' => ['en' => 'Pricing'],
+    'description' => ['en' => 'Simple pricing for your product'],
+    'robots' => ['index', 'follow'],
+    'indexable' => true,
+]);
 ```
 
-The published `config/lazy-seo.php` is intentionally compact. Advanced defaults are still available internally, and you can override any nested key by adding it to the published config.
+```php
+$seo = seo()->forUrl('/pricing');
+$data = seo()->resolve(url: '/pricing');
+```
+
+## Templates
+
+SEO templates are stored in `seo_templates` and support `{key}` placeholders:
+
+```php
+use Step2dev\LazySeoTools\Models\SeoTemplate;
+
+SeoTemplate::query()->create([
+    'name' => 'post',
+    'title' => ['en' => '{title} | {site_name}'],
+    'description' => ['en' => '{excerpt}'],
+    'payload' => ['type' => 'article'],
+    'enabled' => true,
+]);
+```
+
+```php
+seo()->template('post', [
+    'title' => $post->title,
+    'excerpt' => $post->excerpt,
+    'site_name' => config('app.name'),
+]);
+```
 
 ## Common commands
 
 ```bash
+php artisan lazy-seo:about
 php artisan lazy-seo:sitemap
-php artisan lazy-seo:monitor https://example.com
+php artisan lazy-seo:sitemap:warm
 php artisan lazy-seo:crawl https://example.com --max-pages=100
+php artisan lazy-seo:monitor https://example.com
+php artisan lazy-seo:history
 php artisan lazy-seo:indexnow https://example.com/page
+php artisan lazy-seo:content storage/app/page.html
 ```
