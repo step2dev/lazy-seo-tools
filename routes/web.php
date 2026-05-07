@@ -3,11 +3,12 @@
 use Illuminate\Support\Facades\Route;
 
 if (config('lazy-seo.routes.web', false)) {
-    Route::middleware(['web'])
-        ->prefix('lazy-seo')
+    Route::middleware(config('lazy-seo.routes.admin_middleware', ['web']))
+        ->prefix(config('lazy-seo.routes.admin_prefix', 'lazy-seo'))
         ->name('lazy-seo.')
         ->group(function () {
-            Route::view('/analyzer', 'lazy-seo::livewire.analyzer')->name('analyzer');
-            Route::view('/redirects', 'lazy-seo::livewire.redirect-table')->name('redirects');
+            Route::view('/dashboard', 'lazy-seo::admin.dashboard')->name('dashboard');
+            Route::view('/issues', 'lazy-seo::admin.issues')->name('issues');
+            Route::view('/redirects', 'lazy-seo::admin.redirects')->name('redirects');
         });
 }

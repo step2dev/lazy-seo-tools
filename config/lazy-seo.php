@@ -15,6 +15,8 @@ return [
         'seo' => 'seo',
         'seo_redirects' => 'seo_redirects',
         'seo_templates' => 'seo_templates',
+        'seo_scans' => 'seo_scans',
+        'seo_scan_issues' => 'seo_scan_issues',
     ],
 
     'defaults' => [
@@ -29,6 +31,8 @@ return [
 
     'routes' => [
         'web' => env('LAZY_SEO_WEB_ROUTES', false),
+        'admin_prefix' => env('LAZY_SEO_ADMIN_PREFIX', 'lazy-seo'),
+        'admin_middleware' => ['web'],
         'api' => env('LAZY_SEO_API_ROUTES', false),
         'api_prefix' => env('LAZY_SEO_API_PREFIX', 'seo'),
     ],
@@ -94,6 +98,7 @@ return [
         'seo.deleted' => env('LAZY_SEO_WEBHOOK_DELETED'),
     ],
 
+
     'schema' => [
         'organization' => [
             'logo' => env('LAZY_SEO_ORGANIZATION_LOGO'),
@@ -102,6 +107,16 @@ return [
         'website' => [
             'search_url' => env('LAZY_SEO_SEARCH_URL'),
         ],
+    ],
+
+    'monitoring' => [
+        'enabled' => env('LAZY_SEO_MONITORING_ENABLED', true),
+        'url' => env('LAZY_SEO_MONITORING_URL', env('APP_URL')),
+        'schedule' => env('LAZY_SEO_MONITORING_SCHEDULE', null),
+        'max_pages' => (int) env('LAZY_SEO_MONITORING_MAX_PAGES', 50),
+        'fail_under' => (int) env('LAZY_SEO_MONITORING_FAIL_UNDER', 75),
+        'pass_score' => 75,
+        'keep_scans' => (int) env('LAZY_SEO_MONITORING_KEEP_SCANS', 100),
     ],
 
     'crawler' => [

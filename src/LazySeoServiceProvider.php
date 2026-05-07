@@ -3,28 +3,33 @@
 namespace Step2dev\LazySeoTools;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Schedule;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Step2dev\LazySeoTools\Commands\CrawlSiteCommand;
 use Step2dev\LazySeoTools\Commands\ExportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\GenerateSitemapCommand;
 use Step2dev\LazySeoTools\Commands\ImportRedirectsCommand;
 use Step2dev\LazySeoTools\Commands\LazySeoCommand;
-use Step2dev\LazySeoTools\Contracts\SeoResolver;
+use Step2dev\LazySeoTools\Commands\CrawlSiteCommand;
+use Step2dev\LazySeoTools\Commands\MonitorSeoCommand;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
+use Step2dev\LazySeoTools\Http\Livewire\SeoIssuesTable;
+use Step2dev\LazySeoTools\Http\Livewire\SeoMonitoringDashboard;
 use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
 use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
+use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Services\CanonicalService;
 use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\OGImageService;
 use Step2dev\LazySeoTools\Services\OgMetaService;
-use Step2dev\LazySeoTools\Services\RedirectImportExportService;
-use Step2dev\LazySeoTools\Services\SchemaService;
 use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
+use Step2dev\LazySeoTools\Services\SchemaService;
+use Step2dev\LazySeoTools\Services\RedirectImportExportService;
 use Step2dev\LazySeoTools\Services\SeoManager;
-use Step2dev\LazySeoTools\Services\SiteCrawlerService;
+use Step2dev\LazySeoTools\Services\SeoMonitoringService;
 use Step2dev\LazySeoTools\Services\SitemapGeneratorService;
+use Step2dev\LazySeoTools\Services\SiteCrawlerService;
 use Step2dev\LazySeoTools\Services\UrlNormalizer;
 use Step2dev\LazySeoTools\View\Components\JsonLdComponent;
 use Step2dev\LazySeoTools\View\Components\MetaComponent;
@@ -50,6 +55,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
                 ImportRedirectsCommand::class,
                 ExportRedirectsCommand::class,
                 CrawlSiteCommand::class,
+                MonitorSeoCommand::class,
             ]);
     }
 
@@ -65,6 +71,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->app->singleton(SiteCrawlerService::class);
         $this->app->singleton(RedirectImportExportService::class);
         $this->app->singleton(SeoAnalyzerService::class);
+        $this->app->singleton(SeoMonitoringService::class);
         $this->app->singleton(SchemaService::class);
         $this->app->singleton(CanonicalService::class);
         $this->app->singleton(JsonLdService::class);
@@ -85,10 +92,22 @@ class LazySeoServiceProvider extends PackageServiceProvider
         Blade::component('lazy-seo-og', OgComponent::class);
         Blade::component('lazy-seo-twitter', TwitterComponent::class);
 
+
+
+        if ((bool) config('lazy-seo.monitoring.enabled', true) && config('lazy-seo.monitoring.schedule')) {
+            $this->app->booted(function (): void {
+                Schedule::command('lazy-seo:monitor')
+                    ->cron((string) config('lazy-seo.monitoring.schedule'))
+                    ->withoutOverlapping();
+            });
+        }
+
         if (class_exists(Livewire::class)) {
             Livewire::component('lazy-seo-form', SeoForm::class);
             Livewire::component('lazy-seo-analyzer', SeoAnalyzerLivewire::class);
             Livewire::component('lazy-seo-redirect-table', RedirectTable::class);
+            Livewire::component('lazy-seo-monitoring-dashboard', SeoMonitoringDashboard::class);
+            Livewire::component('lazy-seo-issues-table', SeoIssuesTable::class);
         }
     }
 }

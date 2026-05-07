@@ -44,3 +44,14 @@
 - Added `lazy-seo:crawl` command with optional JSON report output.
 - Added crawler config without changing SEO table config behavior.
 - Added crawler tests with HTTP fakes.
+
+## v10 - SEO Monitoring + Admin UI
+
+- Added SEO monitoring database snapshots.
+- Added configurable `seo_scans` and `seo_scan_issues` table names via config only.
+- Added `lazy-seo:monitor` command.
+- Added scheduled monitoring support through `lazy-seo.monitoring.schedule`.
+- Added `SeoMonitoringService`.
+- Added `SeoScan` and `SeoScanIssue` models.
+- Added Livewire admin dashboard and issues table.
+- Added monitoring tests.

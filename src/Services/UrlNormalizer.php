@@ -66,7 +66,6 @@ class UrlNormalizer
 
             if ($segment === '..') {
                 array_pop($segments);
-
                 continue;
             }
 

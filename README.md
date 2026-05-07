@@ -287,3 +287,45 @@ Crawler config:
 ```
 
 Table names are still configured directly in `config/lazy-seo.php` and do not use `env()`.
+
+## SEO Monitoring
+
+Run a crawl and store a persistent SEO snapshot:
+
+```bash
+php artisan lazy-seo:monitor https://example.com --max-pages=100
+```
+
+Enable package web routes when you want the bundled Livewire admin UI:
+
+```env
+LAZY_SEO_WEB_ROUTES=true
+LAZY_SEO_ADMIN_PREFIX=lazy-seo
+```
+
+Admin pages:
+
+- `/lazy-seo/dashboard`
+- `/lazy-seo/issues`
+- `/lazy-seo/redirects`
+
+Schedule monitoring from config:
+
+```env
+LAZY_SEO_MONITORING_SCHEDULE="0 3 * * *"
+LAZY_SEO_MONITORING_URL="https://example.com"
+LAZY_SEO_MONITORING_MAX_PAGES=250
+LAZY_SEO_MONITORING_FAIL_UNDER=75
+```
+
+Monitoring tables are configurable in `config/lazy-seo.php` without `env()`:
+
+```php
+'tables' => [
+    'seo' => 'seo',
+    'seo_redirects' => 'seo_redirects',
+    'seo_templates' => 'seo_templates',
+    'seo_scans' => 'seo_scans',
+    'seo_scan_issues' => 'seo_scan_issues',
+],
+```

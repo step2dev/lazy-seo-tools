@@ -5,6 +5,7 @@ namespace Step2dev\LazySeoTools\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\Rule;
 use Step2dev\LazySeoTools\Models\Seo;
 
 class SeoApiController extends Controller
