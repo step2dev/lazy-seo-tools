@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Http\Livewire;
 
+use Illuminate\Contracts\View\Factory as ViewFactory;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Step2dev\LazySeoTools\Models\SeoScan;
@@ -87,7 +88,7 @@ class SeoScanDetail extends Component
     {
         $data = app(SeoDashboardService::class)->scanDetail($this->scan);
 
-        return view('lazy-seo::livewire.scan-detail', $data + [
+        return app(ViewFactory::class)->make('lazy-seo::livewire.scan-detail', $data + [
             'issues' => $this->filteredIssues()->paginate(25),
         ]);
     }

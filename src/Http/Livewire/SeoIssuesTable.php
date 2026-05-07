@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Http\Livewire;
 
+use Illuminate\Contracts\View\Factory as ViewFactory;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Step2dev\LazySeoTools\Models\SeoScan;
@@ -81,7 +82,7 @@ class SeoIssuesTable extends Component
             ->orderByRaw("case severity when 'error' then 1 when 'warning' then 2 else 3 end")
             ->latest();
 
-        return view('lazy-seo::livewire.issues-table', [
+        return app(ViewFactory::class)->make('lazy-seo::livewire.issues-table', [
             'issues' => $query->paginate(20),
             'scans' => SeoScan::query()->latestFirst()->limit(50)->get(),
             'currentScanId' => $scanId,

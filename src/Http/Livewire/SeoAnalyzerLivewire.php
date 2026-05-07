@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Http\Livewire;
 
+use Illuminate\Contracts\View\Factory as ViewFactory;
 use Livewire\Component;
 use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
 
@@ -38,6 +39,6 @@ class SeoAnalyzerLivewire extends Component
 
     public function render()
     {
-        return view('lazy-seo::livewire.analyzer');
+        return app(ViewFactory::class)->make('lazy-seo::livewire.analyzer');
     }
 }

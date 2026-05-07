@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\View\Components;
 
+use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 use Step2dev\LazySeoTools\Models\Seo;
@@ -18,6 +19,6 @@ class TwitterComponent extends Component
 
     public function render(): View
     {
-        return view('lazy-seo::components.twitter');
+        return app(ViewFactory::class)->make('lazy-seo::components.twitter');
     }
 }

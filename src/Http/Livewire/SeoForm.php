@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Http\Livewire;
 
+use Illuminate\Contracts\View\Factory as ViewFactory;
 use Livewire\Component;
 use Step2dev\LazySeoTools\Models\Seo;
 
@@ -32,6 +33,6 @@ class SeoForm extends Component
 
     public function render()
     {
-        return view('lazy-seo::livewire.seo-form');
+        return app(ViewFactory::class)->make('lazy-seo::livewire.seo-form');
     }
 }
