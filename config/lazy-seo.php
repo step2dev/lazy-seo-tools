@@ -94,7 +94,6 @@ return [
         'seo.deleted' => env('LAZY_SEO_WEBHOOK_DELETED'),
     ],
 
-
     'schema' => [
         'organization' => [
             'logo' => env('LAZY_SEO_ORGANIZATION_LOGO'),
