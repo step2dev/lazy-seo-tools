@@ -7,10 +7,13 @@ use Illuminate\Support\HtmlString;
 use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Data\SeoData;
 use Step2dev\LazySeoTools\Models\Seo;
+use Step2dev\LazySeoTools\Models\SeoTemplate;
 
 class SeoManager extends SeoService implements SeoResolver
 {
     protected array $fluent = [];
+
+    protected ?SeoData $resolvedData = null;
 
     public function analyze(Seo $seo): array
     {
@@ -50,6 +53,13 @@ class SeoManager extends SeoService implements SeoResolver
         return $this->forUrl(request()->path());
     }
 
+    public function make(array $attributes = []): SeoData
+    {
+        $this->resolvedData = $this->data(null, $attributes);
+
+        return $this->resolvedData;
+    }
+
     public function title(string $title): self
     {
         $this->fluent['title'] = $title;
@@ -79,6 +89,13 @@ class SeoManager extends SeoService implements SeoResolver
         return $this;
     }
 
+    public function url(string $url): self
+    {
+        $this->fluent['url'] = $url;
+
+        return $this;
+    }
+
     public function image(string $url): self
     {
         $this->fluent['image'] = $url;
@@ -93,9 +110,47 @@ class SeoManager extends SeoService implements SeoResolver
         return $this;
     }
 
-    public function robots(array $robots): self
+    public function robots(array|string $robots): self
     {
-        $this->fluent['robots'] = $robots;
+        $this->fluent['robots'] = is_string($robots)
+            ? array_map('trim', explode(',', $robots))
+            : $robots;
+
+        return $this;
+    }
+
+    public function noIndex(): self
+    {
+        return $this->robots(['noindex', 'nofollow']);
+    }
+
+    public function template(string $name, array $context = []): self
+    {
+        if (! config('lazy-seo.templates.enabled', true)) {
+            return $this;
+        }
+
+        $template = SeoTemplate::query()->enabled()->where('name', $name)->first();
+
+        if (! $template) {
+            return $this;
+        }
+
+        $locale = app()->getLocale();
+
+        foreach (['title', 'description', 'keywords'] as $field) {
+            $value = $template->getTranslation($field, $locale, false);
+
+            if (is_string($value) && $value !== '') {
+                $this->fluent[$field] = $this->replacePlaceholders($value, $context);
+            }
+        }
+
+        foreach ((array) $template->payload as $key => $value) {
+            if (is_scalar($value)) {
+                $this->fluent[$key] = $this->replacePlaceholders((string) $value, $context);
+            }
+        }
 
         return $this;
     }
@@ -103,13 +158,14 @@ class SeoManager extends SeoService implements SeoResolver
     public function reset(): self
     {
         $this->fluent = [];
+        $this->resolvedData = null;
 
         return $this;
     }
 
     public function data(?Seo $seo = null, array $overrides = []): SeoData
     {
-        $overrides = array_replace($this->fluent, $overrides);
+        $overrides = $this->normalizeKeys(array_replace($this->fluent, $overrides));
 
         return SeoData::fromSeo($seo ?? $this->current(), $overrides);
     }
@@ -121,7 +177,7 @@ class SeoManager extends SeoService implements SeoResolver
 
     public function render(?Seo $seo = null, array $overrides = []): HtmlString
     {
-        $data = $this->data($seo, $overrides);
+        $data = $this->resolvedData ?: $this->data($seo, $overrides);
         $robots = implode(', ', $data->robots);
 
         $tags = array_filter([
@@ -154,5 +210,31 @@ class SeoManager extends SeoService implements SeoResolver
             'indexable' => true,
             'robots' => config('lazy-seo.defaults.robots', ['index', 'follow']),
         ], $attributes));
+    }
+
+    protected function replacePlaceholders(string $value, array $context): string
+    {
+        $context = array_replace([
+            'site_name' => config('app.name'),
+            'locale' => app()->getLocale(),
+        ], $context);
+
+        foreach ($context as $key => $replacement) {
+            if (is_scalar($replacement)) {
+                $value = str_replace('{'.$key.'}', (string) $replacement, $value);
+            }
+        }
+
+        return $value;
+    }
+
+    protected function normalizeKeys(array $data): array
+    {
+        if (array_key_exists('canonical_url', $data)) {
+            $data['canonicalUrl'] = $data['canonical_url'];
+            unset($data['canonical_url']);
+        }
+
+        return $data;
     }
 }

@@ -7,7 +7,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Change these values directly in the published config file. Do not use env()
-    | here: table names must be stable after config:cache.
+    | here: table names must be stable after config:cache and migrations must stay
+    | deterministic across deploys.
     |
     */
     'tables' => [
@@ -17,7 +18,7 @@ return [
     ],
 
     'defaults' => [
-        'title' => config('app.name'),
+        'title' => env('APP_NAME', 'Laravel'),
         'description' => '',
         'keywords' => '',
         'canonical_url' => null,
@@ -33,31 +34,36 @@ return [
     ],
 
     'redirects' => [
-        'enabled' => true,
-        'preserve_query' => true,
+        'enabled' => env('LAZY_SEO_REDIRECTS_ENABLED', true),
+        'preserve_query' => env('LAZY_SEO_REDIRECTS_PRESERVE_QUERY', true),
         'allowed_status_codes' => [301, 302, 307, 308, 410],
     ],
 
     'sitemap' => [
-        'path' => 'sitemap.xml',
-        'cache_key' => 'lazy-seo.sitemap',
-        'cache_minutes' => 60,
-        'default_change_frequency' => 'weekly',
-        'default_priority' => 0.8,
+        'path' => env('LAZY_SEO_SITEMAP_PATH', 'sitemap.xml'),
+        'cache_key' => env('LAZY_SEO_SITEMAP_CACHE_KEY', 'lazy-seo.sitemap'),
+        'cache_minutes' => env('LAZY_SEO_SITEMAP_CACHE_MINUTES', 60),
+        'default_change_frequency' => env('LAZY_SEO_SITEMAP_CHANGE_FREQUENCY', 'weekly'),
+        'default_priority' => (float) env('LAZY_SEO_SITEMAP_PRIORITY', 0.8),
+    ],
+
+    'templates' => [
+        'enabled' => env('LAZY_SEO_TEMPLATES_ENABLED', true),
+        'default' => env('LAZY_SEO_DEFAULT_TEMPLATE', null),
     ],
 
     'og_image' => [
-        'disk' => 'public',
-        'directory' => 'og',
-        'width' => 1200,
-        'height' => 630,
+        'disk' => env('LAZY_SEO_OG_DISK', 'public'),
+        'directory' => env('LAZY_SEO_OG_DIRECTORY', 'og'),
+        'width' => env('LAZY_SEO_OG_WIDTH', 1200),
+        'height' => env('LAZY_SEO_OG_HEIGHT', 630),
     ],
 
     'webhooks' => [
-        'seo.created' => null,
-        'seo.updated' => null,
-        'seo.deleted' => null,
+        'seo.created' => env('LAZY_SEO_WEBHOOK_CREATED'),
+        'seo.updated' => env('LAZY_SEO_WEBHOOK_UPDATED'),
+        'seo.deleted' => env('LAZY_SEO_WEBHOOK_DELETED'),
     ],
 
-    'ai_token' => env('OPENAI_API_KEY'),
+    'ai_token' => env('LAZY_SEO_AI_TOKEN'),
 ];

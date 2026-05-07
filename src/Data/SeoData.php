@@ -17,13 +17,13 @@ final readonly class SeoData
         public string $type = 'website',
     ) {}
 
-    public static function fromSeo(Seo $seo, array $overrides = []): self
+    public static function fromSeo(?Seo $seo = null, array $overrides = []): self
     {
         $locale = app()->getLocale();
         $defaults = config('lazy-seo.defaults', []);
 
-        $robots = $seo->indexable
-            ? ($seo->robots ?: ($defaults['robots'] ?? ['index', 'follow']))
+        $robots = $seo?->indexable !== false
+            ? ($seo?->robots ?: ($defaults['robots'] ?? ['index', 'follow']))
             : ['noindex', 'nofollow'];
 
         $data = [
@@ -31,7 +31,7 @@ final readonly class SeoData
             'title' => self::translated($seo, 'title', $locale) ?: (string) ($defaults['title'] ?? config('app.name')),
             'description' => self::translated($seo, 'description', $locale) ?: (string) ($defaults['description'] ?? ''),
             'keywords' => self::translated($seo, 'keywords', $locale) ?: (string) ($defaults['keywords'] ?? ''),
-            'canonicalUrl' => $seo->canonical_url ?: ($defaults['canonical_url'] ?? null),
+            'canonicalUrl' => $seo?->canonical_url ?: ($defaults['canonical_url'] ?? null),
             'robots' => $robots,
             'image' => $defaults['image'] ?? null,
             'type' => (string) ($defaults['type'] ?? 'website'),
@@ -65,8 +65,12 @@ final readonly class SeoData
         ];
     }
 
-    private static function translated(Seo $seo, string $field, string $locale): string
+    private static function translated(?Seo $seo, string $field, string $locale): string
     {
+        if (! $seo) {
+            return '';
+        }
+
         $value = $seo->getTranslation($field, $locale, false);
 
         return is_string($value) ? $value : '';
