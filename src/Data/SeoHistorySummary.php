@@ -5,10 +5,10 @@ namespace Step2dev\LazySeoTools\Data;
 class SeoHistorySummary
 {
     /**
-     * @param array<int, array<string, mixed>> $scoreTrend
-     * @param array<string, mixed> $issueTrend
-     * @param array<int, array<string, mixed>> $regressions
-     * @param array<int, array<string, mixed>> $resolved
+     * @param  array<int, array<string, mixed>>  $scoreTrend
+     * @param  array<string, mixed>  $issueTrend
+     * @param  array<int, array<string, mixed>>  $regressions
+     * @param  array<int, array<string, mixed>>  $resolved
      */
     public function __construct(
         public readonly ?int $currentScore,

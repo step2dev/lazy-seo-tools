@@ -99,7 +99,6 @@ return [
         'seo.deleted' => env('LAZY_SEO_WEBHOOK_DELETED'),
     ],
 
-
     'schema' => [
         'organization' => [
             'logo' => env('LAZY_SEO_ORGANIZATION_LOGO'),
@@ -148,7 +147,6 @@ return [
             'logout',
         ],
     ],
-
 
     'indexnow' => [
         'enabled' => env('LAZY_SEO_INDEXNOW_ENABLED', false),
