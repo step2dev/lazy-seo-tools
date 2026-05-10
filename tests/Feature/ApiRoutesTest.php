@@ -56,7 +56,7 @@ it('does not expose morph binding fields unless explicitly enabled', function ()
 
 it('rejects morph binding types outside the configured whitelist', function (): void {
     config()->set('lazy-seo.routes.api_allow_morph_binding', true);
-    config()->set('lazy-seo.routes.api_allowed_seoable_types', [Seo::class]);
+    config()->set('lazy-seo.routes.api_allowed_seoable_types', [Step2dev\LazySeoTools\Models\Seo::class]);
 
     $this->postJson('/seo', [
         'url' => '/about',
@@ -69,26 +69,26 @@ it('rejects morph binding types outside the configured whitelist', function (): 
 
 it('accepts morph binding types from the configured whitelist', function (): void {
     config()->set('lazy-seo.routes.api_allow_morph_binding', true);
-    config()->set('lazy-seo.routes.api_allowed_seoable_types', [Seo::class]);
+    config()->set('lazy-seo.routes.api_allowed_seoable_types', [Step2dev\LazySeoTools\Models\Seo::class]);
 
     $this->postJson('/seo', [
         'url' => '/about',
         'title' => ['en' => 'About'],
-        'seoable_type' => Seo::class,
+        'seoable_type' => Step2dev\LazySeoTools\Models\Seo::class,
         'seoable_id' => 123,
     ])->assertCreated()
-        ->assertJsonPath('data.seoable_type', Seo::class)
+        ->assertJsonPath('data.seoable_type', Step2dev\LazySeoTools\Models\Seo::class)
         ->assertJsonPath('data.seoable_id', 123);
 });
 
 it('ignores morph binding payload when morph binding is disabled', function (): void {
     config()->set('lazy-seo.routes.api_allow_morph_binding', false);
-    config()->set('lazy-seo.routes.api_allowed_seoable_types', [Seo::class]);
+    config()->set('lazy-seo.routes.api_allowed_seoable_types', [Step2dev\LazySeoTools\Models\Seo::class]);
 
     $this->postJson('/seo', [
         'url' => '/ignored-morph',
         'title' => ['en' => 'Ignored morph'],
-        'seoable_type' => Seo::class,
+        'seoable_type' => Step2dev\LazySeoTools\Models\Seo::class,
         'seoable_id' => 123,
     ])->assertCreated()
         ->assertJsonMissingPath('data.seoable_type')
