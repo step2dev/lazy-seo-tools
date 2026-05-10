@@ -9,7 +9,13 @@ abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
-        return [LazySeoServiceProvider::class];
+        $providers = [LazySeoServiceProvider::class];
+
+        if (class_exists(\Livewire\LivewireServiceProvider::class)) {
+            array_unshift($providers, \Livewire\LivewireServiceProvider::class);
+        }
+
+        return $providers;
     }
 
     protected function defineEnvironment($app): void

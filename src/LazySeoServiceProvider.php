@@ -193,7 +193,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
         if ($this->featureEnabled('livewire') && class_exists(Livewire::class)) {
             $this->app->booted(function (): void {
-                $this->registerLivewireComponents();
+                $this->registerLivewireComponentsIfAvailable();
             });
         }
     }
@@ -223,8 +223,12 @@ class LazySeoServiceProvider extends PackageServiceProvider
         });
     }
 
-    protected function registerLivewireComponents(): void
+    protected function registerLivewireComponentsIfAvailable(): void
     {
+        if (! $this->app->bound('livewire.finder')) {
+            return;
+        }
+
         $components = [
             'lazy-seo-form' => SeoForm::class,
             'lazy-seo-analyzer' => SeoAnalyzerLivewire::class,
