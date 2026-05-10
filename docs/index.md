@@ -1,6 +1,6 @@
 # step2dev/lazy-seo-tools
 
-`step2dev/lazy-seo-tools` is a Laravel SEO toolkit for page meta tags, model SEO records, redirects, sitemaps, SEO scans, monitoring, IndexNow submissions, content intelligence and JSON-LD.
+`step2dev/lazy-seo-tools` is a core-first Laravel SEO toolkit for page meta tags, model SEO records, redirects, sitemaps and JSON-LD. Crawler, monitoring, IndexNow, content intelligence, Livewire admin and API routes are optional layers.
 
 ## Documentation
 

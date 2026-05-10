@@ -1038,15 +1038,13 @@ See [`docs/security.md`](docs/security.md).
 Before tagging a beta or stable release, follow [`docs/release-checklist.md`](docs/release-checklist.md).
 
 
-## Tailwind-first Blade UI
+## Tailwind 4-first Blade UI
 
-The optional admin and Livewire views use Tailwind utility classes. Add the package views to your Tailwind content paths if you enable the admin UI:
+The optional admin and Livewire views use Tailwind utility classes and never load Tailwind from CDN. Register the package views in your app CSS entry file:
 
-```js
-content: [
-    './resources/**/*.blade.php',
-    './vendor/step2dev/lazy-seo-tools/resources/views/**/*.blade.php',
-],
+```css
+@import "tailwindcss";
+@source "../../vendor/step2dev/lazy-seo-tools/resources/views";
 ```
 
-For quick local previews, enable `LAZY_SEO_TAILWIND_CDN=true`. Keep it disabled in production when Tailwind is compiled by your app.
+Adjust the relative path based on where your compiled CSS entry file lives.

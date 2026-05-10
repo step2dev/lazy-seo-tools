@@ -180,10 +180,6 @@ return [
     ],
 
 
-    'ui' => [
-        'tailwind_cdn' => env('LAZY_SEO_TAILWIND_CDN', false),
-    ],
-
     'validation' => [
         'enabled' => env('LAZY_SEO_CONFIG_VALIDATION', true),
     ],

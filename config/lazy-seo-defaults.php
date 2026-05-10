@@ -246,10 +246,6 @@ return [
     'ai_token' => null,
 
 
-    'ui' => [
-        'tailwind_cdn' => false,
-    ],
-
     'validation' => [
         'enabled' => true,
     ],

@@ -70,21 +70,13 @@ echo seo_jsonld('article', [
 Common schema types include `Article`, `BlogPosting`, `Product`, `Organization`, `LocalBusiness`, `WebSite`, `BreadcrumbList`, `FAQPage` and `WebPage`.
 
 
-## Tailwind
+## Tailwind 4
 
-Lazy SEO package views use Tailwind utility classes. Add package views to your Tailwind content paths when publishing or rendering the optional admin UI:
+Lazy SEO package views use Tailwind utility classes and do not inject CDN assets. Register the package Blade views from your app CSS entry file:
 
-```js
-content: [
-    './resources/**/*.blade.php',
-    './vendor/step2dev/lazy-seo-tools/resources/views/**/*.blade.php',
-],
+```css
+@import "tailwindcss";
+@source "../../vendor/step2dev/lazy-seo-tools/resources/views";
 ```
 
-For quick local previews, enable the optional CDN loader:
-
-```env
-LAZY_SEO_TAILWIND_CDN=true
-```
-
-Do not use the CDN loader in production if your application already compiles Tailwind.
+Adjust the relative path based on where your compiled CSS entry file lives.

@@ -1,6 +1,6 @@
 {
     "name": "step2dev/lazy-seo-tools",
-    "description": "Laravel SEO package with AI, Livewire, Blade and Redirects.",
+    "description": "Core-first Laravel SEO package with optional redirects, sitemaps, crawler, monitoring, Livewire admin and API layers.",
     "keywords": [
         "Step2dev",
         "laravel",

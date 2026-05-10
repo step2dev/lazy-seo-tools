@@ -56,21 +56,13 @@ Available pages:
 /lazy-seo/redirects
 ```
 
-## Tailwind
+## Tailwind 4
 
-Package Blade views use Tailwind utility classes. In real apps, add the package views to your Tailwind `content` paths:
+Package Blade views use Tailwind utility classes and never load Tailwind from CDN. Register the package views in your app CSS entry file with Tailwind 4 `@source`:
 
-```js
-content: [
-    './resources/**/*.blade.php',
-    './vendor/step2dev/lazy-seo-tools/resources/views/**/*.blade.php',
-],
+```css
+@import "tailwindcss";
+@source "../../vendor/step2dev/lazy-seo-tools/resources/views";
 ```
 
-For quick local previews only, you may enable the Tailwind CDN in the package admin pages:
-
-```env
-LAZY_SEO_TAILWIND_CDN=true
-```
-
-Keep this disabled in production when your app already compiles Tailwind.
+Adjust the relative path based on where your compiled CSS entry file lives.
