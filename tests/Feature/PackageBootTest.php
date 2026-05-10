@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
+use Step2dev\LazySeoTools\LazySeoServiceProvider;
 use Step2dev\LazySeoTools\Services\SeoManager;
 
 it('registers the seo manager singleton', function (): void {
@@ -41,8 +43,8 @@ it('merges advanced defaults behind the compact published config', function (): 
 });
 
 it('publishes views to the lazy-seo override namespace', function (): void {
-    $paths = \Illuminate\Support\ServiceProvider::pathsToPublish(
-        \Step2dev\LazySeoTools\LazySeoServiceProvider::class,
+    $paths = ServiceProvider::pathsToPublish(
+        LazySeoServiceProvider::class,
         'lazy-seo-views'
     );
 
