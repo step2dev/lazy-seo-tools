@@ -79,7 +79,7 @@ it('does not crawl deeper than configured max depth', function (): void {
         'https://example.com/level-2' => Illuminate\Support\Facades\Http::response('<title>Level 2</title>', 200),
     ]);
 
-    $result = crawlerForSecurityTests()->crawl('https://example.com', [
+    $result = crawlerForSecurityTests()->crawl('https://example.com/', [
         'max_pages' => 10,
         'max_depth' => 1,
         'rate_limit_ms' => 0,
@@ -87,7 +87,7 @@ it('does not crawl deeper than configured max depth', function (): void {
     ]);
 
     expect(array_map(static fn ($page): string => $page->url, $result->pages))
-        ->toContain('https://example.com')
+        ->toContain('https://example.com/')
         ->toContain('https://example.com/level-1')
         ->not->toContain('https://example.com/level-2');
 });

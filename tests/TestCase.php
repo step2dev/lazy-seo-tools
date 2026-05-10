@@ -9,12 +9,30 @@ abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
-        return [LazySeoServiceProvider::class];
+        $providers = [LazySeoServiceProvider::class];
+
+        if (class_exists(\Livewire\LivewireServiceProvider::class)) {
+            array_unshift($providers, \Livewire\LivewireServiceProvider::class);
+        }
+
+        return $providers;
     }
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('database.default', 'testing');
+        parent::defineEnvironment($app);
+        $app['config']->set('lazy-seo.admin.enabled', true);
+
+        $app['config']->set('auth.guards.sanctum', [
+                    'driver' => 'session',
+                    'provider' => null,
+                ]);
+
+
+        $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('a', 32)));
+        $app['config']->set('app.url', 'https://example.com');
+
+$app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
             'driver' => 'sqlite',
             'database' => ':memory:',
