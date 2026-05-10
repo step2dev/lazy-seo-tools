@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Step2dev\LazySeoTools\Models\Seo;
 
-/** @mixin \Step2dev\LazySeoTools\Models\Seo */
+/** @mixin Seo */
 class SeoResource extends JsonResource
 {
     /** @return array<string, mixed> */
