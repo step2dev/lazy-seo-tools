@@ -359,12 +359,12 @@ seo()->template('post', [
 
 ## Redirects
 
-The package includes `HandleSeoRedirects` middleware.
+Redirect implementation is extracted to `step2dev/lazy-seo-redirects`. `lazy-seo-tools` keeps only backward-compatible wrappers and legacy command aliases.
 
 Register it in your application middleware stack or route middleware:
 
 ```php
-use Step2dev\LazySeoTools\Http\Middleware\HandleSeoRedirects;
+use Step2dev\LazySeoRedirect\Http\Middleware\HandleSeoRedirects;
 ```
 
 Example in `bootstrap/app.php`:
@@ -372,7 +372,7 @@ Example in `bootstrap/app.php`:
 ```php
 ->withMiddleware(function ($middleware) {
     $middleware->web(append: [
-        \Step2dev\LazySeoTools\Http\Middleware\HandleSeoRedirects::class,
+        \Step2dev\LazySeoRedirect\Http\Middleware\HandleSeoRedirects::class,
     ]);
 })
 ```
@@ -380,7 +380,7 @@ Example in `bootstrap/app.php`:
 Create a redirect:
 
 ```php
-use Step2dev\LazySeoTools\Models\SeoRedirect;
+use Step2dev\LazySeoRedirect\Models\SeoRedirect;
 
 SeoRedirect::query()->create([
     'old_url' => '/old-page',
@@ -427,19 +427,19 @@ Enable regex redirects only after reviewing imported/admin-created patterns:
 Import:
 
 ```bash
-php artisan lazy-seo:redirects-import redirects.csv
+php artisan lazy-seo-redirects:import redirects.csv
 ```
 
 Import without updating existing rows:
 
 ```bash
-php artisan lazy-seo:redirects-import redirects.csv --no-update
+php artisan lazy-seo-redirects:import redirects.csv --no-update
 ```
 
 Export:
 
 ```bash
-php artisan lazy-seo:redirects-export redirects.csv
+php artisan lazy-seo-redirects:export redirects.csv
 ```
 
 CSV format:
@@ -977,8 +977,8 @@ Alerts are controlled by:
 php artisan lazy-seo:about
 php artisan lazy-seo:sitemap
 php artisan lazy-seo:sitemap:warm
-php artisan lazy-seo:redirects-import redirects.csv
-php artisan lazy-seo:redirects-export redirects.csv
+php artisan lazy-seo-redirects:import redirects.csv
+php artisan lazy-seo-redirects:export redirects.csv
 php artisan lazy-seo:crawl https://example.com
 php artisan lazy-seo:crawl-queue https://example.com
 php artisan lazy-seo:monitor https://example.com

@@ -108,7 +108,6 @@ class LazySeoServiceProvider extends PackageServiceProvider
             ->hasTranslations()
             ->hasMigrations([
                 '2025_06_19_000001_create_seo_table',
-                '2025_06_19_000002_create_seo_redirects_table',
                 '2025_06_19_000003_create_seo_templates_table',
                 '2025_06_19_000004_create_seo_scans_table',
                 '2025_06_19_000005_create_seo_scan_issues_table',
@@ -136,6 +135,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         $this->mergeLazySeoDefaults();
+        $this->bridgeLazySeoRedirectsConfig();
 
         $this->app->scoped(SeoManager::class);
         $this->app->alias(SeoManager::class, SeoResolver::class);
@@ -294,6 +294,23 @@ class LazySeoServiceProvider extends PackageServiceProvider
             'lazy-seo-issues-table' => SeoIssuesTable::class,
             'lazy-seo-scan-detail' => SeoScanDetail::class,
         ];
+    }
+
+
+    protected function bridgeLazySeoRedirectsConfig(): void
+    {
+        /** @var array<string, mixed> $redirects */
+        $redirects = config('lazy-seo.redirects', []);
+
+        $redirectsConfig = array_merge([
+            'enabled' => $this->featureEnabled('redirects'),
+            'table' => config('lazy-seo.tables.seo_redirects', 'seo_redirects'),
+        ], $redirects);
+
+        config()->set('lazy-seo-redirects', array_replace_recursive(
+            $redirectsConfig,
+            config('lazy-seo-redirects', [])
+        ));
     }
 
     protected function featureEnabled(string $feature): bool

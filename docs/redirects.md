@@ -1,13 +1,20 @@
 # Redirects
 
-The package includes `HandleSeoRedirects` middleware for exact, wildcard and regex redirects.
+Redirect implementation is extracted to [`step2dev/lazy-seo-redirects`](https://github.com/step2dev/lazy-seo-redirects).
+
+`lazy-seo-tools` keeps backward-compatible wrappers only:
+
+- `Step2dev\LazySeoTools\Models\SeoRedirect`
+- `Step2dev\LazySeoTools\Http\Middleware\HandleSeoRedirects`
+- `Step2dev\LazySeoTools\Services\RedirectImportExportService`
+- old command aliases: `lazy-seo:redirects-import`, `lazy-seo:redirects-export`
+
+For new code, use the extracted package namespace.
 
 ## Register middleware
 
-Laravel 11+ style:
-
 ```php
-use Step2dev\LazySeoTools\Http\Middleware\HandleSeoRedirects;
+use Step2dev\LazySeoRedirect\Http\Middleware\HandleSeoRedirects;
 
 ->withMiddleware(function ($middleware) {
     $middleware->web(append: [
@@ -16,20 +23,10 @@ use Step2dev\LazySeoTools\Http\Middleware\HandleSeoRedirects;
 })
 ```
 
-Classic `app/Http/Kernel.php` style:
-
-```php
-protected $middlewareGroups = [
-    'web' => [
-        \Step2dev\LazySeoTools\Http\Middleware\HandleSeoRedirects::class,
-    ],
-];
-```
-
 ## Create redirects
 
 ```php
-use Step2dev\LazySeoTools\Models\SeoRedirect;
+use Step2dev\LazySeoRedirect\Models\SeoRedirect;
 
 SeoRedirect::query()->create([
     'old_url' => '/old-page',
@@ -39,49 +36,31 @@ SeoRedirect::query()->create([
 ]);
 ```
 
-Supported status codes are `301`, `302`, `307`, `308` and `410`.
-
-## Redirect types
-
-Exact redirect:
-
-```php
-'old_url' => '/old-page'
-```
-
-Wildcard redirect:
-
-```php
-'old_url' => '/blog/*'
-```
-
 Regex redirect:
 
 ```php
-'old_url' => '#^old/(post-[0-9]+)$#',
-'is_regex' => true,
-'new_url' => '/new/$1',
+SeoRedirect::query()->create([
+    'old_url' => '#^old/(.*)$#',
+    'new_url' => '/new/$1',
+    'status_code' => 307,
+    'is_regex' => true,
+]);
 ```
-
-`410` redirects return a Gone response and do not need a target URL.
 
 ## CSV import/export
 
-Import redirects:
+Preferred commands from the extracted package:
+
+```bash
+php artisan lazy-seo-redirects:import redirects.csv
+php artisan lazy-seo-redirects:import redirects.csv --no-update
+php artisan lazy-seo-redirects:export redirects.csv
+```
+
+Legacy aliases kept by `lazy-seo-tools`:
 
 ```bash
 php artisan lazy-seo:redirects-import redirects.csv
-```
-
-Import without updating existing rows:
-
-```bash
-php artisan lazy-seo:redirects-import redirects.csv --no-update
-```
-
-Export redirects:
-
-```bash
 php artisan lazy-seo:redirects-export redirects.csv
 ```
 
