@@ -1,12 +1,13 @@
 <?php
 
+use Illuminate\Support\Facades\Http;
 use Step2dev\LazySeoTools\Services\SeoAnalyzerService;
 use Step2dev\LazySeoTools\Services\SiteCrawlerService;
 use Step2dev\LazySeoTools\Services\UrlNormalizer;
 
 function crawlerForSecurityTests(): SiteCrawlerService
 {
-    return new SiteCrawlerService(app(SeoAnalyzerService::class), new UrlNormalizer());
+    return new SiteCrawlerService(app(SeoAnalyzerService::class), new UrlNormalizer);
 }
 
 it('blocks private network targets by default', function (): void {
@@ -72,11 +73,11 @@ it('checks robots rules against urls', function (): void {
 });
 
 it('does not crawl deeper than configured max depth', function (): void {
-    Illuminate\Support\Facades\Http::fake([
-        'https://example.com/robots.txt' => Illuminate\Support\Facades\Http::response('', 404),
-        'https://example.com/' => Illuminate\Support\Facades\Http::response('<a href="/level-1">Level 1</a>', 200),
-        'https://example.com/level-1' => Illuminate\Support\Facades\Http::response('<a href="/level-2">Level 2</a>', 200),
-        'https://example.com/level-2' => Illuminate\Support\Facades\Http::response('<title>Level 2</title>', 200),
+    Http::fake([
+        'https://example.com/robots.txt' => Http::response('', 404),
+        'https://example.com/' => Http::response('<a href="/level-1">Level 1</a>', 200),
+        'https://example.com/level-1' => Http::response('<a href="/level-2">Level 2</a>', 200),
+        'https://example.com/level-2' => Http::response('<title>Level 2</title>', 200),
     ]);
 
     $result = crawlerForSecurityTests()->crawl('https://example.com', [

@@ -2,6 +2,4 @@
 
 namespace Tests;
 
-class TestCase extends \Step2dev\LazySeoTools\Tests\TestCase
-{
-}
+class TestCase extends \Step2dev\LazySeoTools\Tests\TestCase {}

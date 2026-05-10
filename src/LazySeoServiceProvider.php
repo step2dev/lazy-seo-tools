@@ -31,8 +31,8 @@ use Step2dev\LazySeoTools\Services\AI\OpenAIProvider;
 use Step2dev\LazySeoTools\Services\AISeoService;
 use Step2dev\LazySeoTools\Services\AISeoWriterService;
 use Step2dev\LazySeoTools\Services\CanonicalService;
-use Step2dev\LazySeoTools\Services\CTRPredictorService;
 use Step2dev\LazySeoTools\Services\ContentIntelligenceService;
+use Step2dev\LazySeoTools\Services\CTRPredictorService;
 use Step2dev\LazySeoTools\Services\IndexNowService;
 use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\OGImageService;
@@ -107,7 +107,6 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->registerCoreServices();
         $this->registerOptionalServices();
     }
-
 
     protected function registerCoreServices(): void
     {
@@ -196,7 +195,6 @@ class LazySeoServiceProvider extends PackageServiceProvider
             $this->registerLivewireComponents();
         }
     }
-
 
     protected function registerAdminGate(): void
     {

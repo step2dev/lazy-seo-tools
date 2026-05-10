@@ -6,7 +6,7 @@ use Step2dev\LazySeoTools\Services\CTRPredictorService;
 
 class FakeLazySeoAIProvider implements AIProvider
 {
-    public function __construct(private array|null $response) {}
+    public function __construct(private ?array $response) {}
 
     public function chatJson(array $messages): ?array
     {

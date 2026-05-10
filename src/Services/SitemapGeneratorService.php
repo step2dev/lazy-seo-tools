@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Services;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -188,7 +189,7 @@ class SitemapGeneratorService
             }
 
             $query->chunkById((int) ($sourceConfig['chunk'] ?? 500), function ($models) use (&$items, $sourceConfig): void {
-                /** @var \Illuminate\Database\Eloquent\Collection<int, Model> $models */
+                /** @var Collection<int, Model> $models */
                 foreach ($models as $model) {
                     $loc = $this->modelUrl($model, $sourceConfig);
 
