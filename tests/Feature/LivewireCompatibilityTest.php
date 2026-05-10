@@ -13,10 +13,12 @@ it('registers package livewire components when livewire is available', function 
         $this->markTestSkipped('Livewire is not installed.');
     }
 
-    expect(Livewire::getClass('lazy-seo-form'))->toBe(SeoForm::class)
-        ->and(Livewire::getClass('lazy-seo-analyzer'))->toBe(SeoAnalyzerLivewire::class)
-        ->and(Livewire::getClass('lazy-seo-redirect-table'))->toBe(RedirectTable::class)
-        ->and(Livewire::getClass('lazy-seo-monitoring-dashboard'))->toBe(SeoMonitoringDashboard::class)
-        ->and(Livewire::getClass('lazy-seo-issues-table'))->toBe(SeoIssuesTable::class)
-        ->and(Livewire::getClass('lazy-seo-scan-detail'))->toBe(SeoScanDetail::class);
+    $finder = app('livewire.finder');
+
+    expect($finder->getClass('lazy-seo-form'))->toBe(SeoForm::class)
+        ->and($finder->getClass('lazy-seo-analyzer'))->toBe(SeoAnalyzerLivewire::class)
+        ->and($finder->getClass('lazy-seo-redirect-table'))->toBe(RedirectTable::class)
+        ->and($finder->getClass('lazy-seo-monitoring-dashboard'))->toBe(SeoMonitoringDashboard::class)
+        ->and($finder->getClass('lazy-seo-issues-table'))->toBe(SeoIssuesTable::class)
+        ->and($finder->getClass('lazy-seo-scan-detail'))->toBe(SeoScanDetail::class);
 });

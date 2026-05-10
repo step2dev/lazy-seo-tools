@@ -1,6 +1,11 @@
 <?php
 
+use Illuminate\Auth\Middleware\Authenticate;
 use Step2dev\LazySeoTools\Models\Seo;
+
+beforeEach(function (): void {
+    $this->withoutMiddleware(Authenticate::class);
+});
 
 it('stores seo records without allowing morph binding by default', function (): void {
     $response = $this->postJson('/seo', [

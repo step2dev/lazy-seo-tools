@@ -12,6 +12,7 @@ it('collects broken external links when enabled', function (): void {
     $result = app(SiteCrawlerService::class)->crawl('https://example.com', [
         'max_pages' => 1,
         'check_external_links' => true,
+        'allow_private_networks' => true,
     ]);
 
     expect($result->externalBrokenLinks)

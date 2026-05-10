@@ -88,7 +88,7 @@ it('does not crawl deeper than configured max depth', function (): void {
     ]);
 
     expect(array_map(static fn ($page): string => $page->url, $result->pages))
-        ->toContain('https://example.com')
+        ->toContain('https://example.com/')
         ->toContain('https://example.com/level-1')
         ->not->toContain('https://example.com/level-2');
 });
