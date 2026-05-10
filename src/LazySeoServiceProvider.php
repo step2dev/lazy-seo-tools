@@ -5,7 +5,6 @@ namespace Step2dev\LazySeoTools;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schedule;
-use Intervention\Image\ImageManager;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -178,7 +177,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
             $this->app->singleton(ContentIntelligenceService::class);
         }
 
-        if ($this->featureEnabled('og_image') && class_exists(ImageManager::class)) {
+        if ($this->featureEnabled('og_image') && class_exists(\Intervention\Image\ImageManager::class)) {
             $this->app->singleton(OGImageService::class);
         }
 
@@ -231,9 +230,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
         }
 
         if ($this->featureEnabled('livewire') && class_exists(Livewire::class)) {
-            $this->app->booted(function (): void {
-                $this->registerLivewireComponentsIfAvailable();
-            });
+            $this->registerLivewireComponentsIfAvailable();
         }
     }
 
@@ -264,10 +261,6 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
     protected function registerLivewireComponentsIfAvailable(): void
     {
-        if (! $this->app->bound('livewire.finder')) {
-            return;
-        }
-
         foreach ($this->livewireComponents() as $name => $component) {
             Livewire::component($name, $component);
         }
