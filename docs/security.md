@@ -27,10 +27,11 @@ API routes are disabled by default. Write routes require `auth:sanctum` by defau
 
 ```php
 'api' => env('LAZY_SEO_API_ROUTES', false),
+'api_read_middleware' => [],
 'api_write_middleware' => ['auth:sanctum'],
 ```
 
-Do not enable write routes without authentication.
+Do not enable write routes without authentication. Add `auth:sanctum` or a project-specific guard to `api_read_middleware` if SEO records should not be public.
 
 ## Crawler SSRF protection
 

@@ -14,14 +14,14 @@ return new class extends Migration
             $table->timestamp('ignored_at')->nullable()->after('resolved_at');
             $table->string('note')->nullable()->after('ignored_at');
 
-            $table->index(['status', 'severity']);
+            $table->index(['status', 'severity'], 'lazy_seo_scan_issues_status_severity_index');
         });
     }
 
     public function down(): void
     {
         Schema::table(config('lazy-seo.tables.seo_scan_issues', 'seo_scan_issues'), function (Blueprint $table): void {
-            $table->dropIndex(['status', 'severity']);
+            $table->dropIndex('lazy_seo_scan_issues_status_severity_index');
             $table->dropColumn(['status', 'resolved_at', 'ignored_at', 'note']);
         });
     }

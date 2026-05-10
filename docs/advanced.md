@@ -179,6 +179,7 @@ API routes are disabled by default:
     'api' => true,
     'api_prefix' => 'seo',
     'api_middleware' => ['api'],
+    'api_read_middleware' => [],
     'api_write_middleware' => ['auth:sanctum'],
 ],
 ```
@@ -193,7 +194,7 @@ PUT    /seo/{seo}
 DELETE /seo/{seo}
 ```
 
-Write routes use `api_write_middleware`.
+Read routes can be protected with `api_read_middleware`. Write routes use `api_write_middleware`.
 
 ## Queue and scheduled monitoring
 

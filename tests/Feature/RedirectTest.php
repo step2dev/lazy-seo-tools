@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Step2dev\LazySeoTools\Http\Middleware\HandleSeoRedirects;
 use Step2dev\LazySeoTools\Models\SeoRedirect;
-use Tests\TestCase;
+use Step2dev\LazySeoTools\Tests\TestCase;
 
 class RedirectTest extends TestCase
 {

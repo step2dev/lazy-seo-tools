@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schedule;
 use Livewire\Livewire;
-use Throwable;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Step2dev\LazySeoTools\Commands\ContentIntelligenceCommand;
@@ -192,8 +191,10 @@ class LazySeoServiceProvider extends PackageServiceProvider
             });
         }
 
-        if ($this->shouldRegisterLivewireComponents()) {
-            $this->registerLivewireComponents();
+        if ($this->featureEnabled('livewire') && class_exists(Livewire::class)) {
+            $this->app->booted(function (): void {
+                $this->registerLivewireComponents();
+            });
         }
     }
 
@@ -222,23 +223,6 @@ class LazySeoServiceProvider extends PackageServiceProvider
         });
     }
 
-    protected function shouldRegisterLivewireComponents(): bool
-    {
-        if (! $this->featureEnabled('livewire')) {
-            return false;
-        }
-
-        if (! class_exists(Livewire::class)) {
-            return false;
-        }
-
-        if (! $this->app->bound('livewire')) {
-            return false;
-        }
-
-        return true;
-    }
-
     protected function registerLivewireComponents(): void
     {
         $components = [
@@ -251,13 +235,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
         ];
 
         foreach ($components as $name => $component) {
-            try {
-                Livewire::component($name, $component);
-            } catch (\Illuminate\Contracts\Container\BindingResolutionException) {
-                return;
-            } catch (Throwable) {
-                return;
-            }
+            Livewire::component($name, $component);
         }
     }
 

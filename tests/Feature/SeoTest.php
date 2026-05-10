@@ -5,7 +5,7 @@ namespace Step2dev\LazySeoTools\Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Step2dev\LazySeoTools\Models\Seo;
-use Tests\TestCase;
+use Step2dev\LazySeoTools\Tests\TestCase;
 
 class SeoTest extends TestCase
 {

@@ -44,6 +44,7 @@ return [
         'api' => false,
         'api_prefix' => 'seo',
         'api_middleware' => ['api'],
+        'api_read_middleware' => [],
         'api_write_middleware' => ['auth:sanctum'],
         'api_allow_morph_binding' => false,
     ],

@@ -13,14 +13,14 @@ return new class extends Migration
             $table->string('failure_reason')->nullable()->after('options');
             $table->timestamp('started_at')->nullable()->after('failure_reason');
 
-            $table->index(['status', 'created_at']);
+            $table->index(['status', 'created_at'], 'lazy_seo_scans_status_created_at_index');
         });
     }
 
     public function down(): void
     {
         Schema::table(config('lazy-seo.tables.seo_scans', 'seo_scans'), function (Blueprint $table): void {
-            $table->dropIndex(['status', 'created_at']);
+            $table->dropIndex('lazy_seo_scans_status_created_at_index');
             $table->dropColumn(['status', 'failure_reason', 'started_at']);
         });
     }
