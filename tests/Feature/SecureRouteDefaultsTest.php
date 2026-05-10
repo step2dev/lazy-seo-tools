@@ -38,3 +38,15 @@ it('rejects enabled write api routes without auth middleware', function (): void
 
     app(LazySeoConfigValidator::class)->validate();
 })->throws(InvalidArgumentException::class, 'API write routes are enabled');
+
+it('protects api read routes by default', function (): void {
+    expect(config('lazy-seo.routes.api_read_middleware'))
+        ->toContain('auth:sanctum');
+});
+
+it('rejects enabled read api routes without auth middleware', function (): void {
+    config()->set('lazy-seo.routes.api', true);
+    config()->set('lazy-seo.routes.api_read_middleware', []);
+
+    app(LazySeoConfigValidator::class)->validate();
+})->throws(InvalidArgumentException::class, 'API read routes are enabled');

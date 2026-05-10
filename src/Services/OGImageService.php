@@ -10,6 +10,10 @@ class OGImageService
 {
     public function generate(string $title, ?string $path = null): string
     {
+        if (! class_exists(ImageManager::class) || ! class_exists(Driver::class)) {
+            throw new \RuntimeException('OpenGraph image generation requires intervention/image. Install it or disable lazy-seo.features.og_image.');
+        }
+
         $manager = new ImageManager(new Driver);
         $width = (int) config('lazy-seo.og_image.width', 1200);
         $height = (int) config('lazy-seo.og_image.height', 630);

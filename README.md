@@ -21,15 +21,25 @@ Built with `spatie/laravel-package-tools`.
 
 - PHP `^8.2`
 - Laravel `^11.0` or `^12.0` or `^13.0`
-- Livewire `^3.6` or `^4.0`
-- `spatie/laravel-sitemap`
 - `spatie/laravel-translatable`
-- `intervention/image`
+
+Optional integrations:
+
+- `livewire/livewire` `^3.6|^4.0` — only for Livewire/admin UI.
+- `intervention/image` `^3.11` — only for OpenGraph image generation.
+- `spatie/laravel-sitemap` — optional companion package if your app already uses Spatie sitemap tooling.
 
 ## Installation
 
 ```bash
 composer require step2dev/lazy-seo-tools
+```
+
+Install optional layers only when you enable them:
+
+```bash
+composer require livewire/livewire
+composer require intervention/image
 ```
 
 Publish the config:
@@ -364,13 +374,22 @@ Supported redirect types:
 // Exact
 'old_url' => '/old-page'
 
-// Wildcard
+// Wildcard, enabled by default
 'old_url' => '/blog/*'
 
-// Regex
+// Regex, disabled by default for safety
 'old_url' => '#^old/(post-[0-9]+)$#',
 'is_regex' => true,
 'new_url' => '/new/$1'
+```
+
+Enable regex redirects only after reviewing imported/admin-created patterns:
+
+```php
+'redirects' => [
+    'regex_enabled' => env('LAZY_SEO_REDIRECT_REGEX_ENABLED', false),
+    'wildcard_enabled' => env('LAZY_SEO_REDIRECT_WILDCARD_ENABLED', true),
+],
 ```
 
 ### Redirect CSV import/export
@@ -549,6 +568,7 @@ Crawler security defaults block private/reserved networks and manual redirects a
     'queue_only' => false,
     'max_redirects' => 5,
     'max_body_kb' => 1024,
+    'allowed_content_types' => ['text/html', 'application/xhtml+xml'],
 ],
 ```
 
@@ -736,7 +756,11 @@ Supported schema types depend on `SchemaService` / `JsonLdService`, including co
 
 ## OpenGraph image generation
 
-The package includes `OGImageService` and uses Intervention Image v3.
+The package includes `OGImageService`. It is optional and requires Intervention Image v3 when `lazy-seo.features.og_image` is enabled.
+
+```bash
+composer require intervention/image
+```
 
 Config:
 
@@ -754,9 +778,7 @@ Use the service from the container:
 ```php
 use Step2dev\LazySeoTools\Services\OGImageService;
 
-$path = app(OGImageService::class)->generate([
-    'title' => 'Laravel SEO Tools',
-]);
+$path = app(OGImageService::class)->generate('Laravel SEO Tools');
 ```
 
 ## Optional web admin routes
@@ -811,8 +833,13 @@ Enable them in config:
     'api' => true,
     'api_prefix' => 'seo',
     'api_middleware' => ['api'],
-    'api_read_middleware' => [],
+    'api_read_middleware' => ['auth:sanctum'],
     'api_write_middleware' => ['auth:sanctum'],
+    'api_allow_morph_binding' => false,
+    'api_allowed_seoable_types' => [
+        // App\Models\Post::class,
+        // App\Models\Page::class,
+    ],
 ],
 ```
 
@@ -826,7 +853,9 @@ PUT    /seo/{seo}
 DELETE /seo/{seo}
 ```
 
-Read routes can be protected with `api_read_middleware`. Write routes use `api_write_middleware`.
+Read and write routes are protected by `auth:sanctum` by default. If you intentionally expose read routes publicly, remove `api_read_middleware` explicitly in your app config.
+
+Morph binding is disabled by default. If you enable it, whitelist allowed model classes with `api_allowed_seoable_types`; never accept arbitrary `seoable_type` values from clients.
 
 ## Livewire components
 
@@ -961,7 +990,7 @@ Recommended setup:
 
 - enable redirect middleware only after redirects are reviewed;
 - protect admin routes with `auth` or custom middleware;
-- protect API write routes with Sanctum, Passport or custom auth;
+- keep API read/write routes protected unless public read access is intentional;
 - use Redis queue for crawler/monitoring jobs;
 - set crawl page limits in production;
 - enable external link checks carefully because they make real HTTP requests;
@@ -977,8 +1006,10 @@ MIT.
 Lazy SEO Tools keeps dangerous surfaces closed by default:
 
 - admin routes are disabled by default and require `web`, `auth`, and `can:manage-lazy-seo` when enabled;
-- API write routes are disabled by default and require `auth:sanctum` when enabled;
+- API read/write routes are disabled by default and require `auth:sanctum` when enabled;
 - crawler blocks private/reserved networks by default to reduce SSRF risk;
+- crawler rejects oversized `Content-Length` responses and non-HTML content types before parsing;
+- regex redirects are disabled by default;
 - crawler respects `robots.txt` by default and supports max depth, retries, rate limiting, and queue-only mode;
 - AI is disabled by default and requires an explicit token;
 - runtime config validation fails fast on unsafe route/crawler/AI settings.

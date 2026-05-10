@@ -67,6 +67,10 @@ class LazySeoServiceProvider extends PackageServiceProvider
         CanonicalService::class,
         JsonLdService::class,
         OgMetaService::class,
+    ];
+
+    /** @var array<int, class-string> */
+    private const SITEMAP_SERVICES = [
         SitemapGeneratorService::class,
     ];
 
@@ -153,6 +157,10 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
     protected function registerOptionalServices(): void
     {
+        if ($this->featureEnabled('sitemap')) {
+            $this->registerSingletons(self::SITEMAP_SERVICES);
+        }
+
         if ($this->featureEnabled('crawler')) {
             $this->registerSingletons(self::CRAWLER_SERVICES);
         }
@@ -169,7 +177,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
             $this->app->singleton(ContentIntelligenceService::class);
         }
 
-        if ($this->featureEnabled('og_image')) {
+        if ($this->featureEnabled('og_image') && class_exists(\Intervention\Image\ImageManager::class)) {
             $this->app->singleton(OGImageService::class);
         }
 

@@ -56,8 +56,10 @@ return [
         'api_middleware' => ['api'],
         'api_read_middleware' => ['auth:sanctum'],
         'api_write_middleware' => ['auth:sanctum'],
-        'api_allow_morph_binding' => false,
-        'api_allowed_seoable_types' => [],
+        'api_allow_morph_binding' => env('LAZY_SEO_API_ALLOW_MORPH_BINDING', false),
+        'api_allowed_seoable_types' => [
+            // App\Models\Post::class,
+        ],
     ],
 
     /*

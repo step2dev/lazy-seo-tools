@@ -112,3 +112,51 @@ it('does not redirect into a loop', function (): void {
         ->assertOk()
         ->assertSee('next');
 });
+
+it('ignores regex redirects when regex support is disabled', function (): void {
+    config()->set('lazy-seo.redirects.regex_enabled', false);
+
+    SeoRedirect::query()->create([
+        'old_url' => '#^old/(.*)$#',
+        'new_url' => '/new/$1',
+        'status_code' => 307,
+        'enabled' => true,
+        'is_regex' => true,
+    ]);
+
+    $this->get('/old/post-a')
+        ->assertOk()
+        ->assertSee('next');
+});
+
+it('ignores wildcard redirects when wildcard support is disabled', function (): void {
+    config()->set('lazy-seo.redirects.wildcard_enabled', false);
+
+    SeoRedirect::query()->create([
+        'old_url' => '/blog/*',
+        'new_url' => '/articles',
+        'status_code' => 308,
+        'enabled' => true,
+        'is_regex' => false,
+    ]);
+
+    $this->get('/blog/legacy-post')
+        ->assertOk()
+        ->assertSee('next');
+});
+
+it('does not crash on invalid regex redirects', function (): void {
+    config()->set('lazy-seo.redirects.regex_enabled', true);
+
+    SeoRedirect::query()->create([
+        'old_url' => '#^old/([)$#',
+        'new_url' => '/new/$1',
+        'status_code' => 307,
+        'enabled' => true,
+        'is_regex' => true,
+    ]);
+
+    $this->get('/old/post-a')
+        ->assertOk()
+        ->assertSee('next');
+});

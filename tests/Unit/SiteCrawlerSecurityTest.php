@@ -136,3 +136,102 @@ it('blocks non html crawler responses before parsing', function (): void {
 
     expect($result->pages[0]->error)->toBe('Unsupported crawler response content type.');
 });
+
+it('blocks redirects to private network targets', function (): void {
+    Http::fake([
+        'https://example.com/robots.txt' => Http::response('', 404),
+        'https://example.com/' => Http::response('', 302, [
+            'Location' => 'http://127.0.0.1/admin',
+        ]),
+    ]);
+
+    $result = crawlerForSecurityTests()->crawl('https://example.com', [
+        'max_pages' => 1,
+        'rate_limit_ms' => 0,
+    ]);
+
+    expect($result->pages[0]->error)->toBe('Redirect target blocked by crawler security policy.');
+});
+
+it('blocks explicitly configured crawler blocked hosts', function (): void {
+    $crawler = crawlerForSecurityTests();
+    $method = new ReflectionMethod($crawler, 'isUrlAllowed');
+    $method->setAccessible(true);
+
+    expect($method->invoke($crawler, 'https://blocked.example/page', [
+        'allow_private_networks' => true,
+        'allowed_hosts' => [],
+        'blocked_hosts' => ['blocked.example'],
+        'max_redirects' => 5,
+        'max_body_kb' => 1024,
+        'retry_times' => 0,
+        'retry_sleep' => 0,
+    ]))->toBeFalse();
+});
+
+it('allows explicitly configured crawler allowed hosts', function (): void {
+    $crawler = crawlerForSecurityTests();
+    $method = new ReflectionMethod($crawler, 'isUrlAllowed');
+    $method->setAccessible(true);
+
+    expect($method->invoke($crawler, 'https://docs.example/page', [
+        'allow_private_networks' => true,
+        'allowed_hosts' => ['example.com'],
+        'blocked_hosts' => [],
+        'max_redirects' => 5,
+        'max_body_kb' => 1024,
+        'retry_times' => 0,
+        'retry_sleep' => 0,
+    ]))->toBeFalse()
+        ->and($method->invoke($crawler, 'https://docs.example.com/page', [
+            'allow_private_networks' => true,
+            'allowed_hosts' => ['example.com'],
+            'blocked_hosts' => [],
+            'max_redirects' => 5,
+            'max_body_kb' => 1024,
+            'retry_times' => 0,
+            'retry_sleep' => 0,
+        ]))->toBeTrue();
+});
+
+it('does not exceed configured crawler max pages', function (): void {
+    Http::fake([
+        'https://example.com/robots.txt' => Http::response('', 404),
+        'https://example.com/' => Http::response('<a href="/a">A</a><a href="/b">B</a>', 200, ['Content-Type' => 'text/html']),
+        'https://example.com/a' => Http::response('<a href="/c">C</a>', 200, ['Content-Type' => 'text/html']),
+        'https://example.com/b' => Http::response('<title>B</title>', 200, ['Content-Type' => 'text/html']),
+        'https://example.com/c' => Http::response('<title>C</title>', 200, ['Content-Type' => 'text/html']),
+    ]);
+
+    $result = crawlerForSecurityTests()->crawl('https://example.com', [
+        'max_pages' => 2,
+        'max_depth' => 5,
+        'rate_limit_ms' => 0,
+        'allow_private_networks' => true,
+    ]);
+
+    expect($result->pages)->toHaveCount(2);
+});
+
+it('keeps crawling on the same host only and records external candidates only when enabled', function (): void {
+    Http::fake([
+        'https://example.com/robots.txt' => Http::response('', 404),
+        'https://example.com/' => Http::response('<a href="https://other.test/page">Other</a><a href="/local">Local</a>', 200, ['Content-Type' => 'text/html']),
+        'https://example.com/local' => Http::response('<title>Local</title>', 200, ['Content-Type' => 'text/html']),
+        'https://other.test/page' => Http::response('', 404),
+    ]);
+
+    $result = crawlerForSecurityTests()->crawl('https://example.com', [
+        'max_pages' => 5,
+        'max_depth' => 2,
+        'rate_limit_ms' => 0,
+        'allow_private_networks' => true,
+        'check_external_links' => false,
+    ]);
+
+    expect(array_map(static fn ($page): string => $page->url, $result->pages))
+        ->toContain('https://example.com/')
+        ->toContain('https://example.com/local')
+        ->not->toContain('https://other.test/page')
+        ->and($result->externalBrokenLinks)->toBe([]);
+});
