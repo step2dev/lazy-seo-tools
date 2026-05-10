@@ -38,6 +38,8 @@ Publish views only when the application needs to customize package Blade output:
 php artisan vendor:publish --tag="lazy-seo-views"
 ```
 
+Published views are placed in `resources/views/vendor/lazy-seo`, matching the package `lazy-seo` view namespace.
+
 ## Layout setup
 
 Add the meta renderer to the main layout:

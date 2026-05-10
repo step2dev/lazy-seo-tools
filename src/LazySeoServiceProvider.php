@@ -202,9 +202,10 @@ class LazySeoServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         $this->app->make(LazySeoConfigValidator::class)->validate();
+        $this->registerViewPublishing();
         $this->registerAdminGate();
 
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'seo');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'lazy-seo');
 
         if ($this->featureEnabled('meta')) {
             Blade::component('lazy-seo-meta', MetaComponent::class);
@@ -216,8 +217,8 @@ class LazySeoServiceProvider extends PackageServiceProvider
         if ($this->featureEnabled('schema')) {
             Blade::component('lazy-seo-jsonld', JsonLdComponent::class);
             Blade::component('lazy-seo-schema', JsonLdComponent::class);
-            Blade::component('seo::json-ld', JsonLdComponent::class);
-            Blade::component('seo::schema', JsonLdComponent::class);
+            Blade::component('lazy-seo::json-ld', JsonLdComponent::class);
+            Blade::component('lazy-seo::schema', JsonLdComponent::class);
         }
 
         if ($this->featureEnabled('monitoring') && (bool) config('lazy-seo.monitoring.enabled', true) && config('lazy-seo.monitoring.schedule')) {
@@ -235,6 +236,17 @@ class LazySeoServiceProvider extends PackageServiceProvider
         if ($this->featureEnabled('livewire') && class_exists(Livewire::class)) {
             $this->registerLivewireComponentsIfAvailable();
         }
+    }
+
+    protected function registerViewPublishing(): void
+    {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
+        $this->publishes([
+            __DIR__.'/../resources/views' => resource_path('views/vendor/lazy-seo'),
+        ], 'lazy-seo-views');
     }
 
     protected function registerAdminGate(): void

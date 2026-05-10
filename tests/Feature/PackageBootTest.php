@@ -39,3 +39,12 @@ it('merges advanced defaults behind the compact published config', function (): 
         ->and(config('lazy-seo.sitemap.chunk_size'))->toBe(50000)
         ->and(config('lazy-seo.redirects.allowed_status_codes'))->toBe([301, 302, 307, 308, 410]);
 });
+
+it('publishes views to the lazy-seo override namespace', function (): void {
+    $paths = \Illuminate\Support\ServiceProvider::pathsToPublish(
+        \Step2dev\LazySeoTools\LazySeoServiceProvider::class,
+        'lazy-seo-views'
+    );
+
+    expect(array_values($paths))->toContain(resource_path('views/vendor/lazy-seo'));
+});

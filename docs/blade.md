@@ -40,11 +40,17 @@ JSON-LD aliases:
 
 ```blade
 <x-lazy-seo-schema type="article" :data="$schema" />
-<x-seo::json-ld type="article" :data="$schema" />
-<x-seo::schema type="article" :data="$schema" />
+<x-lazy-seo::json-ld type="article" :data="$schema" />
+<x-lazy-seo::schema type="article" :data="$schema" />
 ```
 
-Package views are loaded under the `seo` namespace.
+Package views are loaded under the `lazy-seo` namespace. Publish them only when the application needs to customize package Blade output:
+
+```bash
+php artisan vendor:publish --tag="lazy-seo-views"
+```
+
+Published views are placed in `resources/views/vendor/lazy-seo`.
 
 ## JSON-LD helpers
 
