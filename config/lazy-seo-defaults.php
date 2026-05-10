@@ -245,7 +245,6 @@ return [
 
     'ai_token' => null,
 
-
     'validation' => [
         'enabled' => true,
     ],
