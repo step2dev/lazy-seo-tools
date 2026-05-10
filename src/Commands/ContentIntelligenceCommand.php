@@ -3,10 +3,13 @@
 namespace Step2dev\LazySeoTools\Commands;
 
 use Illuminate\Console\Command;
+use Step2dev\LazySeoTools\Concerns\EnsuresFeatureIsEnabled;
 use Step2dev\LazySeoTools\Services\ContentIntelligenceService;
 
 class ContentIntelligenceCommand extends Command
 {
+    use EnsuresFeatureIsEnabled;
+
     public $signature = 'lazy-seo:content
         {file : HTML file to analyze}
         {--keywords= : Comma-separated target keywords}
@@ -17,6 +20,10 @@ class ContentIntelligenceCommand extends Command
 
     public function handle(ContentIntelligenceService $service): int
     {
+        if (! $this->ensureFeatureIsEnabled('content_intelligence')) {
+            return self::FAILURE;
+        }
+
         $file = (string) $this->argument('file');
 
         if (! is_file($file)) {

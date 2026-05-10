@@ -1,6 +1,16 @@
-# Advanced features
+# Advanced opt-in features
+
+The core package covers meta tags, model SEO records, redirects, sitemaps and JSON-LD. Everything in this document should be enabled only when the application needs it.
 
 ## Site crawler
+
+Enable it first:
+
+```php
+'features' => [
+    'crawler' => true,
+],
+```
 
 Run a crawl:
 
@@ -22,6 +32,15 @@ php artisan lazy-seo:crawl https://example.com --output=storage/app/seo-report.j
 ```
 
 ## SEO monitoring
+
+Monitoring depends on crawler scans:
+
+```php
+'features' => [
+    'crawler' => true,
+    'monitoring' => true,
+],
+```
 
 Run a monitoring scan and store results in the database:
 
@@ -64,6 +83,14 @@ php artisan lazy-seo:history https://example.com --json
 
 ## Content intelligence
 
+Enable it first:
+
+```php
+'features' => [
+    'content_intelligence' => true,
+],
+```
+
 Analyze an HTML file:
 
 ```bash
@@ -85,6 +112,14 @@ php artisan lazy-seo:content storage/app/page.html --json
 Checks include word count, headings, readability, keyword density, image alt attributes, internal links, external links, suggestions and warnings.
 
 ## IndexNow
+
+Enable it first:
+
+```php
+'features' => [
+    'indexnow' => true,
+],
+```
 
 Enable IndexNow in config:
 
@@ -144,6 +179,18 @@ $result->toArray();
 ```
 
 ## OpenGraph image generation
+
+Install the optional image dependency and enable the layer:
+
+```bash
+composer require intervention/image
+```
+
+```php
+'features' => [
+    'og_image' => true,
+],
+```
 
 The package includes `OGImageService` and uses Intervention Image v3.
 

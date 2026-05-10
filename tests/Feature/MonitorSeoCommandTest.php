@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Http;
 use Step2dev\LazySeoTools\Models\SeoScan;
 
 it('runs monitoring command and stores scan', function (): void {
+    config()->set('lazy-seo.features.crawler', true);
+    config()->set('lazy-seo.features.monitoring', true);
     Http::fake([
         'https://example.com/' => Http::response('<html><head><title>Command SEO Title</title><meta name="description" content="Valid command description for seo monitoring."><link rel="canonical" href="https://example.com/"></head><body><h1>Home</h1>'.str_repeat(' content', 260).'</body></html>', 200),
     ]);

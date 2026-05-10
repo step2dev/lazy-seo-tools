@@ -139,12 +139,17 @@ seo()->template('post', [
 ]);
 ```
 
-## Common commands
+## Core commands
 
 ```bash
 php artisan lazy-seo:about
 php artisan lazy-seo:sitemap
 php artisan lazy-seo:sitemap:warm
+```
+
+Advanced commands are available after enabling their feature flags:
+
+```bash
 php artisan lazy-seo:crawl https://example.com --max-pages=100
 php artisan lazy-seo:monitor https://example.com
 php artisan lazy-seo:history

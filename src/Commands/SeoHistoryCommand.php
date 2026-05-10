@@ -3,10 +3,13 @@
 namespace Step2dev\LazySeoTools\Commands;
 
 use Illuminate\Console\Command;
+use Step2dev\LazySeoTools\Concerns\EnsuresFeatureIsEnabled;
 use Step2dev\LazySeoTools\Services\SeoHistoryService;
 
 class SeoHistoryCommand extends Command
 {
+    use EnsuresFeatureIsEnabled;
+
     public $signature = 'lazy-seo:history
         {url? : Optional URL/domain to filter scan history}
         {--limit=10 : Number of recent scans}
@@ -16,6 +19,10 @@ class SeoHistoryCommand extends Command
 
     public function handle(SeoHistoryService $history): int
     {
+        if (! $this->ensureFeatureIsEnabled('monitoring')) {
+            return self::FAILURE;
+        }
+
         $summary = $history->summarize(
             startUrl: $this->argument('url') ?: null,
             limit: (int) $this->option('limit'),

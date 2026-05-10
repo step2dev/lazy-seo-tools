@@ -4,10 +4,13 @@ namespace Step2dev\LazySeoTools\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Step2dev\LazySeoTools\Concerns\EnsuresFeatureIsEnabled;
 use Step2dev\LazySeoTools\Services\SiteCrawlerService;
 
 class CrawlSiteCommand extends Command
 {
+    use EnsuresFeatureIsEnabled;
+
     public $signature = 'lazy-seo:crawl
         {url : Start URL}
         {--max-pages= : Maximum pages to crawl}
@@ -21,6 +24,10 @@ class CrawlSiteCommand extends Command
 
     public function handle(SiteCrawlerService $crawler): int
     {
+        if (! $this->ensureFeatureIsEnabled('crawler')) {
+            return self::FAILURE;
+        }
+
         if ((bool) config('lazy-seo.crawler.queue_only', false)) {
             $this->components->error('Synchronous crawling is disabled by lazy-seo.crawler.queue_only. Use lazy-seo:crawl-queue or lazy-seo:monitor --queue.');
 

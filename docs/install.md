@@ -4,10 +4,13 @@
 
 - PHP `^8.2`
 - Laravel `^11.0`, `^12.0` or `^13.0`
-- Livewire `^3.6` or `^4.0` when Livewire components are used
-- `spatie/laravel-sitemap`
 - `spatie/laravel-translatable`
-- `intervention/image`
+
+Optional:
+
+- Livewire `^3.6` or `^4.0` when Livewire/admin components are used.
+- `intervention/image` when OpenGraph image generation is enabled.
+- `spatie/laravel-sitemap` only if your application also wants Spatie sitemap tooling.
 
 ## Install the package
 
@@ -75,7 +78,7 @@ LAZY_SEO_INDEXNOW_KEY=your-indexnow-key
 
 ## Feature flags
 
-Disable modules that are not needed by the application:
+The package ships as a small core. Advanced modules are opt-in:
 
 ```php
 'features' => [
@@ -83,13 +86,54 @@ Disable modules that are not needed by the application:
     'schema' => true,
     'redirects' => true,
     'sitemap' => true,
-    'crawler' => true,
-    'monitoring' => true,
+    'crawler' => false,
+    'monitoring' => false,
     'indexnow' => false,
-    'content_intelligence' => true,
-    'og_image' => true,
+    'content_intelligence' => false,
+    'og_image' => false,
     'livewire' => false,
     'admin' => false,
     'api' => false,
+],
+```
+
+
+## Enable advanced layers
+
+Crawler/monitoring:
+
+```php
+'features' => [
+    'crawler' => true,
+    'monitoring' => true,
+],
+```
+
+Livewire admin UI:
+
+```bash
+composer require livewire/livewire
+```
+
+```php
+'features' => [
+    'livewire' => true,
+    'admin' => true,
+],
+
+'routes' => [
+    'web' => true,
+],
+```
+
+API routes stay disabled until both the feature and routes are enabled:
+
+```php
+'features' => [
+    'api' => true,
+],
+
+'routes' => [
+    'api' => true,
 ],
 ```

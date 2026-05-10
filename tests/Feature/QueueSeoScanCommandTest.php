@@ -5,6 +5,8 @@ use Step2dev\LazySeoTools\Jobs\RunSeoScanJob;
 use Step2dev\LazySeoTools\Models\SeoScan;
 
 it('dispatches queued seo scan job', function (): void {
+    config()->set('lazy-seo.features.crawler', true);
+    config()->set('lazy-seo.features.monitoring', true);
     Bus::fake();
 
     $this->artisan('lazy-seo:crawl-queue', [

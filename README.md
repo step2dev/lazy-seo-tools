@@ -2,7 +2,7 @@
 
 Production-focused SEO toolkit for Laravel 11/12/13.
 
-Lazy SEO Tools helps you manage page meta, model SEO, redirects, sitemaps, SEO scans, monitoring, IndexNow submissions, content analysis and JSON-LD from one Laravel package.
+Lazy SEO Tools starts small: page meta, model SEO, redirects, sitemaps and JSON-LD. Heavier modules like crawler, monitoring, IndexNow, content intelligence, OpenGraph image generation, Livewire admin and API are opt-in layers.
 
 Built with `spatie/laravel-package-tools`.
 
@@ -35,7 +35,7 @@ Optional integrations:
 composer require step2dev/lazy-seo-tools
 ```
 
-Install optional layers only when you enable them:
+Install optional integrations only when you enable the matching advanced layer:
 
 ```bash
 composer require livewire/livewire
@@ -158,7 +158,9 @@ Runtime settings like routes, sitemap path, crawler limits, queue settings, aler
 
 ### Feature flags
 
-Use feature flags to keep the package light for each application:
+The package is split into a small core and opt-in advanced layers. New installs should keep only the required modules enabled.
+
+Core defaults:
 
 ```php
 'features' => [
@@ -166,14 +168,27 @@ Use feature flags to keep the package light for each application:
     'schema' => true,
     'redirects' => true,
     'sitemap' => true,
-    'crawler' => true,
-    'monitoring' => true,
+
+    // Advanced opt-in layers
+    'crawler' => false,
+    'monitoring' => false,
     'indexnow' => false,
-    'content_intelligence' => true,
-    'og_image' => true,
+    'content_intelligence' => false,
+    'og_image' => false,
     'livewire' => false,
     'admin' => false,
     'api' => false,
+],
+```
+
+Enable an advanced layer only when the app actively uses it. For example, monitoring needs the crawler, and the admin UI needs Livewire:
+
+```php
+'features' => [
+    'crawler' => true,
+    'monitoring' => true,
+    'livewire' => true,
+    'admin' => true,
 ],
 ```
 
@@ -529,7 +544,7 @@ Checks include:
 - Twitter card readiness;
 - JSON-LD presence.
 
-## Site crawler
+## Advanced: site crawler
 
 Run a crawl from CLI:
 
@@ -574,7 +589,7 @@ Crawler security defaults block private/reserved networks and manual redirects a
 
 For a strict production crawler, set `allowed_hosts` to your public domain list and enable `queue_only` for large/scheduled scans.
 
-## SEO monitoring
+## Advanced: SEO monitoring
 
 Run a monitoring scan and save results to the database:
 
@@ -632,7 +647,7 @@ JSON output:
 php artisan lazy-seo:history https://example.com --json
 ```
 
-## Content intelligence
+## Advanced: content intelligence
 
 Analyze an HTML file:
 
@@ -669,7 +684,7 @@ Content intelligence checks:
 - external links;
 - suggestions and warnings.
 
-## IndexNow
+## Advanced: IndexNow
 
 Enable IndexNow in config:
 

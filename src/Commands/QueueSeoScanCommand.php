@@ -3,11 +3,14 @@
 namespace Step2dev\LazySeoTools\Commands;
 
 use Illuminate\Console\Command;
+use Step2dev\LazySeoTools\Concerns\EnsuresFeatureIsEnabled;
 use Step2dev\LazySeoTools\Jobs\RunSeoScanJob;
 use Step2dev\LazySeoTools\Services\SeoMonitoringService;
 
 class QueueSeoScanCommand extends Command
 {
+    use EnsuresFeatureIsEnabled;
+
     public $signature = 'lazy-seo:crawl-queue
         {url : Start URL}
         {--max-pages= : Maximum pages to crawl}
@@ -22,6 +25,10 @@ class QueueSeoScanCommand extends Command
 
     public function handle(SeoMonitoringService $monitoring): int
     {
+        if (! $this->ensureFeatureIsEnabled('crawler') || ! $this->ensureFeatureIsEnabled('monitoring')) {
+            return self::FAILURE;
+        }
+
         $options = array_filter([
             'max_pages' => $this->option('max-pages') ? (int) $this->option('max-pages') : null,
             'max_depth' => $this->option('max-depth') ? (int) $this->option('max-depth') : null,
