@@ -4,7 +4,8 @@
     "keywords": [
         "Step2dev",
         "laravel",
-        "lazy-seo"
+        "lazy-seo",
+        "seo"
     ],
     "homepage": "https://github.com/step2dev/lazy-seo-tools",
     "license": "MIT",
@@ -17,6 +18,10 @@
     ],
     "require": {
         "php": "^8.2",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-dom": "*",
+        "ext-curl": "*",
         "illuminate/contracts": "^11.0||^12.0||^13.0",
         "intervention/image": "^3.11",
         "livewire/livewire": "^3.6|^4.0",
