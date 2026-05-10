@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Services;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Step2dev\LazySeoTools\Data\CrawledPage;
 use Step2dev\LazySeoTools\Data\CrawlResult;
@@ -136,6 +137,24 @@ class SiteCrawlerService
                 $status = $response->status();
 
                 if (! in_array($status, [301, 302, 303, 307, 308], true)) {
+                    if ($this->responseExceedsMaxBody($response, $security)) {
+                        return new CrawledPage(
+                            url: $currentUrl,
+                            status: $status,
+                            redirects: $redirects,
+                            error: 'Response exceeds crawler max body size.'
+                        );
+                    }
+
+                    if (! $this->isAllowedContentType($response, $security)) {
+                        return new CrawledPage(
+                            url: $currentUrl,
+                            status: $status,
+                            redirects: $redirects,
+                            error: 'Unsupported crawler response content type.'
+                        );
+                    }
+
                     $html = $this->limitedBody((string) $response->body(), (int) $security['max_body_kb']);
 
                     return $this->parse($currentUrl, $status, $html, $redirects);
@@ -323,6 +342,16 @@ class SiteCrawlerService
                     $lastRequestAt = microtime(true);
                 }
 
+                if ($this->responseExceedsMaxBody($response, $security)) {
+                    $broken[$url] = [
+                        'status' => $response->status(),
+                        'error' => 'Response exceeds crawler max body size.',
+                        'sources' => array_values(array_unique($sources)),
+                    ];
+
+                    continue;
+                }
+
                 if ($response->status() >= 400) {
                     $broken[$url] = [
                         'status' => $response->status(),
@@ -403,9 +432,52 @@ class SiteCrawlerService
             'blocked_hosts' => array_map('strtolower', (array) ($options['blocked_hosts'] ?? config('lazy-seo.crawler.blocked_hosts', []))),
             'max_redirects' => max(0, (int) ($options['max_redirects'] ?? config('lazy-seo.crawler.max_redirects', 5))),
             'max_body_kb' => max(1, (int) ($options['max_body_kb'] ?? config('lazy-seo.crawler.max_body_kb', 1024))),
+            'allowed_content_types' => array_values(array_filter(array_map(
+                static fn (mixed $type): string => strtolower(trim((string) $type)),
+                (array) ($options['allowed_content_types'] ?? config('lazy-seo.crawler.allowed_content_types', ['text/html', 'application/xhtml+xml']))
+            ))),
             'retry_times' => max(0, (int) ($options['retry_times'] ?? config('lazy-seo.crawler.retry_times', 1))),
             'retry_sleep' => max(0, (int) ($options['retry_sleep'] ?? config('lazy-seo.crawler.retry_sleep', 250))),
         ];
+    }
+
+    /** @param array<string, mixed> $security */
+    protected function responseExceedsMaxBody(Response $response, array $security): bool
+    {
+        $contentLength = $response->header('Content-Length');
+
+        if (! is_string($contentLength) || trim($contentLength) === '') {
+            return false;
+        }
+
+        $contentLength = trim($contentLength);
+
+        if (! ctype_digit($contentLength)) {
+            return false;
+        }
+
+        return (int) $contentLength > $this->maxBodyBytes($security);
+    }
+
+    /** @param array<string, mixed> $security */
+    protected function isAllowedContentType(Response $response, array $security): bool
+    {
+        $contentType = strtolower(trim((string) $response->header('Content-Type')));
+
+        if ($contentType === '') {
+            return true;
+        }
+
+        $contentType = trim(explode(';', $contentType)[0]);
+        $allowedContentTypes = (array) ($security['allowed_content_types'] ?? []);
+
+        return $allowedContentTypes === [] || in_array($contentType, $allowedContentTypes, true);
+    }
+
+    /** @param array<string, mixed> $security */
+    protected function maxBodyBytes(array $security): int
+    {
+        return max(1, (int) $security['max_body_kb']) * 1024;
     }
 
     /** @param array<int, string> $exclude */

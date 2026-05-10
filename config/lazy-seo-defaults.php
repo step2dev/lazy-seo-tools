@@ -185,6 +185,7 @@ return [
         'max_external_links' => 50,
         'max_redirects' => 5,
         'max_body_kb' => 1024,
+        'allowed_content_types' => ['text/html', 'application/xhtml+xml'],
         'allow_private_networks' => false,
         'allowed_hosts' => [],
         'blocked_hosts' => [],

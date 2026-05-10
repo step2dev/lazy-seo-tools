@@ -100,3 +100,39 @@ it('truncates oversized response bodies before parsing', function (): void {
 
     expect(strlen($method->invoke($crawler, str_repeat('a', 4096), 1)))->toBe(1024);
 });
+
+it('blocks responses with content length above crawler limit before parsing', function (): void {
+    Http::fake([
+        'https://example.com/robots.txt' => Http::response('', 404),
+        'https://example.com/' => Http::response(str_repeat('a', 2048), 200, [
+            'Content-Length' => '2048',
+            'Content-Type' => 'text/html',
+        ]),
+    ]);
+
+    $result = crawlerForSecurityTests()->crawl('https://example.com', [
+        'max_pages' => 1,
+        'max_body_kb' => 1,
+        'rate_limit_ms' => 0,
+        'allow_private_networks' => true,
+    ]);
+
+    expect($result->pages[0]->error)->toBe('Response exceeds crawler max body size.');
+});
+
+it('blocks non html crawler responses before parsing', function (): void {
+    Http::fake([
+        'https://example.com/robots.txt' => Http::response('', 404),
+        'https://example.com/' => Http::response('{"ok": true}', 200, [
+            'Content-Type' => 'application/json',
+        ]),
+    ]);
+
+    $result = crawlerForSecurityTests()->crawl('https://example.com', [
+        'max_pages' => 1,
+        'rate_limit_ms' => 0,
+        'allow_private_networks' => true,
+    ]);
+
+    expect($result->pages[0]->error)->toBe('Unsupported crawler response content type.');
+});

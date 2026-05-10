@@ -71,7 +71,9 @@ it('supports wildcard redirects when enabled', function (): void {
         ->assertRedirect('/articles');
 });
 
-it('supports regex target replacement', function (): void {
+it('supports regex target replacement when enabled', function (): void {
+    config(['lazy-seo.redirects.regex_enabled' => true]);
+
     SeoRedirect::query()->create([
         'old_url' => '#^old/(.*)$#',
         'new_url' => '/new/$1',

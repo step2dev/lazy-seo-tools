@@ -59,6 +59,39 @@ use Step2dev\LazySeoTools\View\Components\TwitterComponent;
 
 class LazySeoServiceProvider extends PackageServiceProvider
 {
+    /** @var array<int, class-string> */
+    private const CORE_SERVICES = [
+        UrlNormalizer::class,
+        SeoAnalyzerService::class,
+        SchemaService::class,
+        CanonicalService::class,
+        JsonLdService::class,
+        OgMetaService::class,
+        SitemapGeneratorService::class,
+    ];
+
+    /** @var array<int, class-string> */
+    private const CRAWLER_SERVICES = [
+        SiteCrawlerService::class,
+        SeoAuditService::class,
+        SeoScanReportService::class,
+    ];
+
+    /** @var array<int, class-string> */
+    private const MONITORING_SERVICES = [
+        SeoAlertService::class,
+        SeoDashboardService::class,
+        SeoMonitoringService::class,
+        SeoHistoryService::class,
+    ];
+
+    /** @var array<int, class-string> */
+    private const AI_SERVICES = [
+        AISeoService::class,
+        AISeoWriterService::class,
+        CTRPredictorService::class,
+    ];
+
     public function configurePackage(Package $package): void
     {
         $package
@@ -110,13 +143,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
     protected function registerCoreServices(): void
     {
-        $this->app->singleton(UrlNormalizer::class);
-        $this->app->singleton(SeoAnalyzerService::class);
-        $this->app->singleton(SchemaService::class);
-        $this->app->singleton(CanonicalService::class);
-        $this->app->singleton(JsonLdService::class);
-        $this->app->singleton(OgMetaService::class);
-        $this->app->singleton(SitemapGeneratorService::class);
+        $this->registerSingletons(self::CORE_SERVICES);
         $this->app->singleton(AIProvider::class, OpenAIProvider::class);
 
         if ($this->featureEnabled('redirects')) {
@@ -127,16 +154,11 @@ class LazySeoServiceProvider extends PackageServiceProvider
     protected function registerOptionalServices(): void
     {
         if ($this->featureEnabled('crawler')) {
-            $this->app->singleton(SiteCrawlerService::class);
-            $this->app->singleton(SeoAuditService::class);
-            $this->app->singleton(SeoScanReportService::class);
+            $this->registerSingletons(self::CRAWLER_SERVICES);
         }
 
         if ($this->featureEnabled('monitoring')) {
-            $this->app->singleton(SeoAlertService::class);
-            $this->app->singleton(SeoDashboardService::class);
-            $this->app->singleton(SeoMonitoringService::class);
-            $this->app->singleton(SeoHistoryService::class);
+            $this->registerSingletons(self::MONITORING_SERVICES);
         }
 
         if ($this->featureEnabled('indexnow')) {
@@ -152,9 +174,17 @@ class LazySeoServiceProvider extends PackageServiceProvider
         }
 
         if ((bool) config('lazy-seo.ai.enabled', false)) {
-            $this->app->singleton(AISeoService::class);
-            $this->app->singleton(AISeoWriterService::class);
-            $this->app->singleton(CTRPredictorService::class);
+            $this->registerSingletons(self::AI_SERVICES);
+        }
+    }
+
+    /**
+     * @param  array<int, class-string>  $services
+     */
+    protected function registerSingletons(array $services): void
+    {
+        foreach ($services as $service) {
+            $this->app->singleton($service);
         }
     }
 
@@ -229,7 +259,17 @@ class LazySeoServiceProvider extends PackageServiceProvider
             return;
         }
 
-        $components = [
+        foreach ($this->livewireComponents() as $name => $component) {
+            Livewire::component($name, $component);
+        }
+    }
+
+    /**
+     * @return array<string, class-string>
+     */
+    protected function livewireComponents(): array
+    {
+        return [
             'lazy-seo-form' => SeoForm::class,
             'lazy-seo-analyzer' => SeoAnalyzerLivewire::class,
             'lazy-seo-redirect-table' => RedirectTable::class,
@@ -237,10 +277,6 @@ class LazySeoServiceProvider extends PackageServiceProvider
             'lazy-seo-issues-table' => SeoIssuesTable::class,
             'lazy-seo-scan-detail' => SeoScanDetail::class,
         ];
-
-        foreach ($components as $name => $component) {
-            Livewire::component($name, $component);
-        }
     }
 
     protected function featureEnabled(string $feature): bool

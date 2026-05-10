@@ -21,7 +21,7 @@ it('registers package livewire components when livewire is available', function 
         ->and(Livewire::test('lazy-seo-issues-table')->instance())->toBeInstanceOf(SeoIssuesTable::class);
 
     $scan = SeoScan::query()->create([
-        'url' => 'https://example.com',
+        'start_url' => 'https://example.com',
         'status' => 'completed',
     ]);
 

@@ -137,6 +137,7 @@ return [
         'max_external_links' => (int) env('LAZY_SEO_CRAWLER_MAX_EXTERNAL_LINKS', 50),
         'max_redirects' => (int) env('LAZY_SEO_CRAWLER_MAX_REDIRECTS', 5),
         'max_body_kb' => (int) env('LAZY_SEO_CRAWLER_MAX_BODY_KB', 1024),
+        'allowed_content_types' => ['text/html', 'application/xhtml+xml'],
         'allow_private_networks' => (bool) env('LAZY_SEO_CRAWLER_ALLOW_PRIVATE_NETWORKS', false),
         'allowed_hosts' => [],
         'blocked_hosts' => [],
