@@ -22,6 +22,12 @@ it('renders meta tags through the helper', function (): void {
 });
 
 it('publishes package routes when enabled', function (): void {
+    config()->set('lazy-seo.routes.web', true);
+
+    require __DIR__.'/../../routes/web.php';
+
+    Route::getRoutes()->refreshNameLookups();
+
     expect(Route::has('lazy-seo.dashboard'))->toBeTrue()
         ->and(Route::has('lazy-seo.issues'))->toBeTrue()
         ->and(Route::has('lazy-seo.redirects'))->toBeTrue();

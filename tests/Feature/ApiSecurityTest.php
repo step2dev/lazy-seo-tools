@@ -20,6 +20,8 @@ beforeEach(function (): void {
                 Route::delete('/{seo}', [SeoApiController::class, 'destroy'])->name('destroy');
             });
         });
+
+    Route::getRoutes()->refreshNameLookups();
 });
 
 it('registers api read routes with the configured auth middleware by default', function (): void {
