@@ -24,9 +24,9 @@ class HtmlSeoParser
             'image' => $this->metaProperty($xpath, 'og:image') ?: $this->metaContent($xpath, 'twitter:image'),
             'has_og' => filled($this->metaProperty($xpath, 'og:title')),
             'has_twitter' => filled($this->metaContent($xpath, 'twitter:title')),
-            'headings' => $this->headings($xpath),
-            'links' => $this->links($xpath, $baseUrl),
-            'images' => $this->images($xpath, $baseUrl),
+            'headings' => $this->headings($xpath, $html),
+            'links' => $this->links($xpath, $baseUrl, $html),
+            'images' => $this->images($xpath, $baseUrl, $html),
         ];
     }
 
@@ -98,7 +98,7 @@ class HtmlSeoParser
     }
 
     /** @return array<int, array{level: int, text: string}> */
-    protected function headings(DOMXPath $xpath): array
+    protected function headings(DOMXPath $xpath, string $html): array
     {
         $headings = [];
 
@@ -113,11 +113,11 @@ class HtmlSeoParser
             ];
         }
 
-        return $headings;
+        return $headings !== [] ? $headings : $this->fallbackHeadings($html);
     }
 
     /** @return array<int, array{url: string, text: string, external: bool}> */
-    protected function links(DOMXPath $xpath, string $baseUrl): array
+    protected function links(DOMXPath $xpath, string $baseUrl, string $html): array
     {
         $links = [];
 
@@ -139,11 +139,11 @@ class HtmlSeoParser
             ];
         }
 
-        return $links;
+        return $links !== [] ? $links : $this->fallbackLinks($html, $baseUrl);
     }
 
     /** @return array<int, array{src: string, alt: string}> */
-    protected function images(DOMXPath $xpath, string $baseUrl): array
+    protected function images(DOMXPath $xpath, string $baseUrl, string $html): array
     {
         $images = [];
 
@@ -164,7 +164,86 @@ class HtmlSeoParser
             ];
         }
 
+        return $images !== [] ? $images : $this->fallbackImages($html, $baseUrl);
+    }
+
+    /** @return array<int, array{level: int, text: string}> */
+    protected function fallbackHeadings(string $html): array
+    {
+        preg_match_all('/<h([1-6])\b[^>]*>(.*?)(?=<h[1-6]\b|<\/h\1>|$)/isu', $html, $matches, PREG_SET_ORDER);
+
+        $headings = [];
+
+        foreach ($matches as $match) {
+            $text = $this->clean(strip_tags($match[2]));
+
+            if ($text === null) {
+                continue;
+            }
+
+            $headings[] = [
+                'level' => (int) $match[1],
+                'text' => $text,
+            ];
+        }
+
+        return $headings;
+    }
+
+    /** @return array<int, array{url: string, text: string, external: bool}> */
+    protected function fallbackLinks(string $html, string $baseUrl): array
+    {
+        preg_match_all('/<a\b[^>]*href=(?P<quote>["\']?)([^"\'\s>]+)\k<quote>[^>]*>(.*?)(?=<a\b|<\/a>|$)/isu', $html, $matches, PREG_SET_ORDER);
+
+        $links = [];
+
+        foreach ($matches as $match) {
+            $url = $this->urls->normalize($match[2], $baseUrl);
+
+            if (! $url) {
+                continue;
+            }
+
+            $links[] = [
+                'url' => $url,
+                'text' => $this->clean(strip_tags($match[3])) ?? '',
+                'external' => ! $this->urls->sameHost($url, $baseUrl),
+            ];
+        }
+
+        return $links;
+    }
+
+    /** @return array<int, array{src: string, alt: string}> */
+    protected function fallbackImages(string $html, string $baseUrl): array
+    {
+        preg_match_all('/<img\b[^>]*src=(?P<quote>["\']?)([^"\'\s>]+)\k<quote>[^>]*>/isu', $html, $matches, PREG_SET_ORDER);
+
+        $images = [];
+
+        foreach ($matches as $match) {
+            $src = $this->urls->normalize($match[2], $baseUrl);
+
+            if (! $src) {
+                continue;
+            }
+
+            $images[] = [
+                'src' => $src,
+                'alt' => $this->extractAttribute($match[0], 'alt') ?? '',
+            ];
+        }
+
         return $images;
+    }
+
+    protected function extractAttribute(string $html, string $attribute): ?string
+    {
+        if (! preg_match('/\s'.preg_quote($attribute, '/').'=(?P<quote>["\']?)([^"\'\s>]*)\k<quote>/isu', $html, $match)) {
+            return null;
+        }
+
+        return $this->clean($match[2]);
     }
 
     protected function clean(?string $value): ?string

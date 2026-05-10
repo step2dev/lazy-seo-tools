@@ -32,7 +32,7 @@ class LazySeoConfigValidator
             }
         }
 
-        if ((bool) config('lazy-seo.routes.api', false) && (bool) config('lazy-seo.features.api', true)) {
+        if ((bool) config('lazy-seo.routes.api', false)) {
             $readMiddleware = $this->middlewareList(config('lazy-seo.routes.api_read_middleware', []));
             $writeMiddleware = $this->middlewareList(config('lazy-seo.routes.api_write_middleware', []));
 
@@ -66,7 +66,7 @@ class LazySeoConfigValidator
 
     protected function validateCrawler(): void
     {
-        if (! (bool) config('lazy-seo.features.crawler', true) || ! (bool) config('lazy-seo.crawler.enabled', true)) {
+        if (! (bool) config('lazy-seo.crawler.enabled', true)) {
             return;
         }
 
