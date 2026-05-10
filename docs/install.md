@@ -14,6 +14,15 @@ Optional:
 
 ## Install the package
 
+For the current GitHub source version:
+
+```bash
+composer config repositories.lazy-seo-tools vcs https://github.com/step2dev/lazy-seo-tools
+composer require step2dev/lazy-seo-tools:dev-main
+```
+
+After a stable Packagist release is available, the install can be simplified to:
+
 ```bash
 composer require step2dev/lazy-seo-tools
 ```

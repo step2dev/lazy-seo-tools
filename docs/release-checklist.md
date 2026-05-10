@@ -11,16 +11,31 @@ composer analyse
 composer test
 ```
 
-## Fresh Laravel application smoke test
+## Fresh Laravel application smoke test from GitHub
 
-Run against a clean app for every supported Laravel version.
+Run against a clean app for every supported Laravel version. This verifies the public GitHub installation path, not only the local path repository.
 
 ```bash
 composer create-project laravel/laravel lazy-seo-smoke
 cd lazy-seo-smoke
-composer config repositories.lazy-seo path ../lazy-seo-tools
+composer config repositories.lazy-seo-tools vcs https://github.com/step2dev/lazy-seo-tools
+composer require step2dev/lazy-seo-tools:dev-main
+php artisan vendor:publish --tag=lazy-seo-config
+php artisan vendor:publish --tag=lazy-seo-migrations
+php artisan migrate
+```
+
+## Local path smoke test before pushing
+
+Use this only for unreleased local changes.
+
+```bash
+composer create-project laravel/laravel lazy-seo-smoke-local
+cd lazy-seo-smoke-local
+composer config repositories.lazy-seo-tools path ../lazy-seo-tools
 composer require step2dev/lazy-seo-tools:@dev
 php artisan vendor:publish --tag=lazy-seo-config
+php artisan vendor:publish --tag=lazy-seo-migrations
 php artisan migrate
 ```
 
