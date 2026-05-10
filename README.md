@@ -1,6 +1,6 @@
 # Lazy SEO Tools
 
-Production-focused SEO toolkit for Laravel 11/12/13.
+Core-first SEO toolkit for Laravel 11/12/13.
 
 Lazy SEO Tools starts small: page meta, model SEO, redirects, sitemaps and JSON-LD. Heavier modules like crawler, monitoring, IndexNow, content intelligence, OpenGraph image generation, Livewire admin and API are opt-in layers.
 
@@ -1036,3 +1036,17 @@ See [`docs/security.md`](docs/security.md).
 ## Release safety
 
 Before tagging a beta or stable release, follow [`docs/release-checklist.md`](docs/release-checklist.md).
+
+
+## Tailwind-first Blade UI
+
+The optional admin and Livewire views use Tailwind utility classes. Add the package views to your Tailwind content paths if you enable the admin UI:
+
+```js
+content: [
+    './resources/**/*.blade.php',
+    './vendor/step2dev/lazy-seo-tools/resources/views/**/*.blade.php',
+],
+```
+
+For quick local previews, enable `LAZY_SEO_TAILWIND_CDN=true`. Keep it disabled in production when Tailwind is compiled by your app.

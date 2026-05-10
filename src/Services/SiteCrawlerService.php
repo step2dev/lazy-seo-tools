@@ -12,7 +12,10 @@ class SiteCrawlerService
     public function __construct(
         protected SeoAnalyzerService $analyzer,
         protected UrlNormalizer $urls,
-    ) {}
+        protected ?HtmlSeoParser $parser = null,
+    ) {
+        $this->parser ??= new HtmlSeoParser($this->urls);
+    }
 
     public function crawl(string $startUrl, array $options = []): CrawlResult
     {
@@ -184,133 +187,33 @@ class SiteCrawlerService
     /** @param array<int, string> $redirects */
     public function parse(string $url, int $status, string $html, array $redirects = []): CrawledPage
     {
-        $title = $this->firstMatch('/<title[^>]*>(.*?)<\/title>/is', $html);
-        $description = $this->metaContent($html, 'description');
-        $canonical = $this->linkHref($html, 'canonical');
-        $robots = array_map('trim', explode(',', strtolower((string) $this->metaContent($html, 'robots'))));
-        $robots = array_values(array_filter($robots));
-        $headings = $this->headings($html);
-        $links = $this->links($html, $url);
-        $images = $this->images($html, $url);
+        /** @var array{title: ?string, description: ?string, canonical: ?string, robots: array<int, string>, image: ?string, has_og: bool, has_twitter: bool, headings: array<int, array{level: int, text: string}>, links: array<int, array{url: string, text: string, external: bool}>, images: array<int, array{src: string, alt: string}>} $parsed */
+        $parsed = $this->parser->parse($html, $url);
 
         $analysis = $this->analyzer->analyzePage([
-            'title' => $title,
-            'description' => $description,
-            'canonical_url' => $canonical,
-            'robots' => $robots,
-            'image' => $this->metaProperty($html, 'og:image') ?: $this->metaContent($html, 'twitter:image'),
-            'og' => (bool) $this->metaProperty($html, 'og:title'),
-            'twitter' => (bool) $this->metaContent($html, 'twitter:title'),
+            'title' => $parsed['title'],
+            'description' => $parsed['description'],
+            'canonical_url' => $parsed['canonical'],
+            'robots' => $parsed['robots'],
+            'image' => $parsed['image'],
+            'og' => $parsed['has_og'],
+            'twitter' => $parsed['has_twitter'],
             'html' => $html,
         ]);
 
         return new CrawledPage(
             url: $url,
             status: $status,
-            title: $title,
-            description: $description,
-            canonical: $canonical,
-            robots: $robots,
-            headings: $headings,
-            links: $links,
-            images: $images,
+            title: $parsed['title'],
+            description: $parsed['description'],
+            canonical: $parsed['canonical'],
+            robots: $parsed['robots'],
+            headings: $parsed['headings'],
+            links: $parsed['links'],
+            images: $parsed['images'],
             redirects: $redirects,
             analysis: $analysis,
         );
-    }
-
-    protected function firstMatch(string $pattern, string $html): ?string
-    {
-        return preg_match($pattern, $html, $matches) ? trim(strip_tags(html_entity_decode($matches[1]))) : null;
-    }
-
-    protected function metaContent(string $html, string $name): ?string
-    {
-        $name = preg_quote($name, '/');
-
-        if (preg_match('/<meta[^>]+name=["\']'.$name.'["\'][^>]+content=["\']([^"\']*)["\'][^>]*>/i', $html, $matches)) {
-            return trim(html_entity_decode($matches[1]));
-        }
-
-        if (preg_match('/<meta[^>]+content=["\']([^"\']*)["\'][^>]+name=["\']'.$name.'["\'][^>]*>/i', $html, $matches)) {
-            return trim(html_entity_decode($matches[1]));
-        }
-
-        return null;
-    }
-
-    protected function metaProperty(string $html, string $property): ?string
-    {
-        $property = preg_quote($property, '/');
-
-        if (preg_match('/<meta[^>]+property=["\']'.$property.'["\'][^>]+content=["\']([^"\']*)["\'][^>]*>/i', $html, $matches)) {
-            return trim(html_entity_decode($matches[1]));
-        }
-
-        return null;
-    }
-
-    protected function linkHref(string $html, string $rel): ?string
-    {
-        $rel = preg_quote($rel, '/');
-
-        if (preg_match('/<link[^>]+rel=["\']'.$rel.'["\'][^>]+href=["\']([^"\']*)["\'][^>]*>/i', $html, $matches)) {
-            return trim(html_entity_decode($matches[1]));
-        }
-
-        return null;
-    }
-
-    protected function headings(string $html): array
-    {
-        preg_match_all('/<h([1-6])[^>]*>(.*?)<\/h\1>/is', $html, $matches, PREG_SET_ORDER);
-
-        return array_map(static fn (array $match): array => [
-            'level' => (int) $match[1],
-            'text' => trim(strip_tags(html_entity_decode($match[2]))),
-        ], $matches);
-    }
-
-    protected function links(string $html, string $baseUrl): array
-    {
-        preg_match_all('/<a\b[^>]*href\s*=\s*(["\'])(.*?)\1[^>]*>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER);
-
-        return array_values(array_filter(array_map(function (array $match) use ($baseUrl): ?array {
-            $url = $this->urls->normalize($match[2], $baseUrl);
-
-            if (! $url) {
-                return null;
-            }
-
-            return [
-                'url' => $url,
-                'text' => trim(strip_tags(html_entity_decode($match[3]))),
-                'external' => ! $this->urls->sameHost($url, $baseUrl),
-            ];
-        }, $matches)));
-    }
-
-    protected function images(string $html, string $baseUrl): array
-    {
-        preg_match_all('/<img\b[^>]*>/i', $html, $matches);
-
-        return array_values(array_filter(array_map(function (string $tag) use ($baseUrl): ?array {
-            if (! preg_match('/src\s*=\s*(["\'])(.*?)\1/i', $tag, $srcMatch)) {
-                return null;
-            }
-
-            $src = $this->urls->normalize($srcMatch[2], $baseUrl);
-
-            if (! $src) {
-                return null;
-            }
-
-            $alt = preg_match('/alt\s*=\s*(["\'])(.*?)\1/i', $tag, $altMatch)
-                ? trim(html_entity_decode($altMatch[2]))
-                : '';
-
-            return ['src' => $src, 'alt' => $alt];
-        }, $matches[0])));
     }
 
     protected function checkExternalLinks(array $links, int $timeout, string $userAgent, array $security, int $rateLimitMs): array
@@ -505,9 +408,9 @@ class SiteCrawlerService
     {
         $parts = parse_url($url);
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-        $host = strtolower((string) ($parts['host'] ?? ''));
+        $host = strtolower(rtrim((string) ($parts['host'] ?? ''), '.'));
 
-        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
+        if (! in_array($scheme, ['http', 'https'], true) || $host === '' || isset($parts['user']) || isset($parts['pass'])) {
             return false;
         }
 
@@ -547,9 +450,9 @@ class SiteCrawlerService
 
     protected function hostResolvesToPrivateNetwork(string $host): bool
     {
-        $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : gethostbynamel($host);
+        $ips = $this->resolvedIpAddresses($host);
 
-        if ($ips === false || $ips === []) {
+        if ($ips === []) {
             return true;
         }
 
@@ -560,6 +463,85 @@ class SiteCrawlerService
         }
 
         return false;
+    }
+
+    /** @return array<int, string> */
+    protected function resolvedIpAddresses(string $host): array
+    {
+        $host = strtolower(rtrim(trim($host, '[]'), '.'));
+
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return [$host];
+        }
+
+        $decodedIpv4 = $this->decodeIpv4LikeHost($host);
+
+        if ($decodedIpv4 !== null) {
+            return [$decodedIpv4];
+        }
+
+        $ips = [];
+
+        foreach ((array) gethostbynamel($host) as $ip) {
+            if (is_string($ip) && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $ips[] = $ip;
+            }
+        }
+
+        if (function_exists('dns_get_record')) {
+            foreach ((array) dns_get_record($host, DNS_A + DNS_AAAA) as $record) {
+                foreach (['ip', 'ipv6'] as $key) {
+                    if (isset($record[$key]) && is_string($record[$key]) && filter_var($record[$key], FILTER_VALIDATE_IP)) {
+                        $ips[] = $record[$key];
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($ips));
+    }
+
+    protected function decodeIpv4LikeHost(string $host): ?string
+    {
+        if (! preg_match('/^(?:0x[0-9a-f]+|0[0-7]*|[0-9]+)(?:\.(?:0x[0-9a-f]+|0[0-7]*|[0-9]+)){0,3}$/i', $host)) {
+            return null;
+        }
+
+        $parts = array_map(fn (string $part): int => $this->decodeNumericHostPart($part), explode('.', $host));
+
+        if (count($parts) === 1) {
+            $value = $parts[0];
+        } elseif (count($parts) === 2) {
+            [$a, $b] = $parts;
+            $value = ($a << 24) + $b;
+        } elseif (count($parts) === 3) {
+            [$a, $b, $c] = $parts;
+            $value = ($a << 24) + ($b << 16) + $c;
+        } else {
+            [$a, $b, $c, $d] = $parts;
+            $value = ($a << 24) + ($b << 16) + ($c << 8) + $d;
+        }
+
+        if ($value < 0 || $value > 4294967295) {
+            return null;
+        }
+
+        $ip = long2ip($value);
+
+        return is_string($ip) ? $ip : null;
+    }
+
+    protected function decodeNumericHostPart(string $part): int
+    {
+        if (str_starts_with(strtolower($part), '0x')) {
+            return (int) hexdec(substr($part, 2));
+        }
+
+        if (strlen($part) > 1 && str_starts_with($part, '0')) {
+            return (int) octdec($part);
+        }
+
+        return (int) $part;
     }
 
     protected function isPublicIp(string $ip): bool

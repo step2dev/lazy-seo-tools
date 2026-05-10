@@ -22,6 +22,7 @@ it('renders meta tags through the helper', function (): void {
 });
 
 it('publishes package routes when enabled', function (): void {
+    config()->set('lazy-seo.features.admin', true);
     config()->set('lazy-seo.routes.web', true);
 
     require __DIR__.'/../../routes/web.php';

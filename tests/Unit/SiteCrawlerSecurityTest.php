@@ -235,3 +235,58 @@ it('keeps crawling on the same host only and records external candidates only wh
         ->not->toContain('https://other.test/page')
         ->and($result->externalBrokenLinks)->toBe([]);
 });
+
+it('blocks ipv6 private and loopback targets', function (): void {
+    $crawler = crawlerForSecurityTests();
+    $method = new ReflectionMethod($crawler, 'isUrlAllowed');
+    $method->setAccessible(true);
+
+    $security = [
+        'allow_private_networks' => false,
+        'allowed_hosts' => [],
+        'blocked_hosts' => [],
+        'max_redirects' => 5,
+        'max_body_kb' => 1024,
+        'retry_times' => 0,
+        'retry_sleep' => 0,
+    ];
+
+    expect($method->invoke($crawler, 'http://[::1]/admin', $security))->toBeFalse()
+        ->and($method->invoke($crawler, 'http://[fc00::1]/admin', $security))->toBeFalse();
+});
+
+it('blocks numeric ipv4 tricks that resolve to private targets', function (): void {
+    $crawler = crawlerForSecurityTests();
+    $method = new ReflectionMethod($crawler, 'isUrlAllowed');
+    $method->setAccessible(true);
+
+    $security = [
+        'allow_private_networks' => false,
+        'allowed_hosts' => [],
+        'blocked_hosts' => [],
+        'max_redirects' => 5,
+        'max_body_kb' => 1024,
+        'retry_times' => 0,
+        'retry_sleep' => 0,
+    ];
+
+    expect($method->invoke($crawler, 'http://2130706433/admin', $security))->toBeFalse()
+        ->and($method->invoke($crawler, 'http://0177.0.0.1/admin', $security))->toBeFalse()
+        ->and($method->invoke($crawler, 'http://0x7f.0.0.1/admin', $security))->toBeFalse();
+});
+
+it('blocks crawler urls with userinfo', function (): void {
+    $crawler = crawlerForSecurityTests();
+    $method = new ReflectionMethod($crawler, 'isUrlAllowed');
+    $method->setAccessible(true);
+
+    expect($method->invoke($crawler, 'https://user:password@example.com/page', [
+        'allow_private_networks' => true,
+        'allowed_hosts' => [],
+        'blocked_hosts' => [],
+        'max_redirects' => 5,
+        'max_body_kb' => 1024,
+        'retry_times' => 0,
+        'retry_sleep' => 0,
+    ]))->toBeFalse();
+});

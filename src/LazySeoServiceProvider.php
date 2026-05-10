@@ -34,6 +34,7 @@ use Step2dev\LazySeoTools\Services\AISeoWriterService;
 use Step2dev\LazySeoTools\Services\CanonicalService;
 use Step2dev\LazySeoTools\Services\ContentIntelligenceService;
 use Step2dev\LazySeoTools\Services\CTRPredictorService;
+use Step2dev\LazySeoTools\Services\HtmlSeoParser;
 use Step2dev\LazySeoTools\Services\IndexNowService;
 use Step2dev\LazySeoTools\Services\JsonLdService;
 use Step2dev\LazySeoTools\Services\OGImageService;
@@ -77,6 +78,7 @@ class LazySeoServiceProvider extends PackageServiceProvider
 
     /** @var array<int, class-string> */
     private const CRAWLER_SERVICES = [
+        HtmlSeoParser::class,
         SiteCrawlerService::class,
         SeoAuditService::class,
         SeoScanReportService::class,

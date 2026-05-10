@@ -13,6 +13,7 @@ class LazySeoConfigValidator
         }
 
         $this->validateRoutes();
+        $this->validateLivewire();
         $this->validateCrawler();
         $this->validateAi();
     }
@@ -46,6 +47,20 @@ class LazySeoConfigValidator
             if ((bool) config('lazy-seo.routes.api_allow_morph_binding', false) && $this->middlewareList(config('lazy-seo.routes.api_allowed_seoable_types', [])) === []) {
                 $this->fail('API morph binding is enabled, but lazy-seo.routes.api_allowed_seoable_types is empty.');
             }
+        }
+    }
+
+    protected function validateLivewire(): void
+    {
+        $livewireEnabled = (bool) config('lazy-seo.features.livewire', false);
+        $adminEnabled = (bool) config('lazy-seo.features.admin', false) || (bool) config('lazy-seo.routes.web', false);
+
+        if (! $livewireEnabled && $adminEnabled) {
+            $this->fail('Lazy SEO admin UI requires lazy-seo.features.livewire to be enabled.');
+        }
+
+        if ($livewireEnabled && ! class_exists('Livewire\Livewire')) {
+            $this->fail('Lazy SEO Livewire feature is enabled, but livewire/livewire is not installed. Run composer require livewire/livewire or disable lazy-seo.features.livewire.');
         }
     }
 

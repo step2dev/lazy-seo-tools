@@ -1,13 +1,15 @@
 <!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lazy SEO Dashboard</title>@livewireStyles</head>
-<body style="margin:0; padding:2rem; background:#f8fafc; color:#0f172a;">
-    <main style="max-width:1100px; margin:0 auto; display:grid; gap:1.5rem;">
-        <nav style="display:flex; gap:1rem; font-family:system-ui,sans-serif;">
-            <a href="{{ route('lazy-seo.dashboard') }}">Dashboard</a>
-            <a href="{{ route('lazy-seo.issues') }}">Issues</a>
-            <a href="{{ route('lazy-seo.redirects') }}">Redirects</a>
-        </nav>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lazy SEO Dashboard</title>
+    @include('lazy-seo::partials.tailwind')
+    @livewireStyles
+</head>
+<body class="min-h-full bg-slate-50 px-4 py-8 text-slate-950 antialiased">
+    <main class="mx-auto grid max-w-6xl gap-6">
+        @include('lazy-seo::partials.admin-nav')
         @livewire('lazy-seo-monitoring-dashboard')
     </main>
     @livewireScripts

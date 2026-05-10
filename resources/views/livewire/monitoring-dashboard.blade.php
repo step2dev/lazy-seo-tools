@@ -1,103 +1,110 @@
-<div class="lazy-seo-dashboard" style="font-family: system-ui, sans-serif; display: grid; gap: 1rem;">
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+<div class="lazy-seo-dashboard grid gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <h2 style="font-size:1.4rem; margin:0;">Lazy SEO Monitoring</h2>
-            <p style="margin:.25rem 0 0; color:#64748b;">Latest crawl snapshots, issue trends, weak pages and redirect usage.</p>
+            <h2 class="text-xl font-semibold text-slate-950">Lazy SEO Monitoring</h2>
+            <p class="mt-1 text-sm text-slate-500">Latest crawl snapshots, issue trends, weak pages and redirect usage.</p>
         </div>
 
         @if($latest)
-            <div style="text-align:right;">
-                <strong style="font-size:2rem;">{{ $latest->score }}/100</strong>
-                <div style="color:{{ $latest->score_delta >= 0 ? '#16a34a' : '#dc2626' }}; font-size:.85rem;">{{ $latest->score_delta >= 0 ? '+' : '' }}{{ $latest->score_delta }} since previous scan</div>
+            <div class="text-right">
+                <strong class="text-3xl font-bold text-slate-950">{{ $latest->score }}/100</strong>
+                <div @class(['text-sm font-medium', 'text-emerald-600' => $latest->score_delta >= 0, 'text-red-600' => $latest->score_delta < 0])>{{ $latest->score_delta >= 0 ? '+' : '' }}{{ $latest->score_delta }} since previous scan</div>
             </div>
         @endif
     </div>
 
     @if($latest)
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:.75rem;">
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $latest->pages_count }}</strong><br><span>Pages</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $latest->issues_count }}</strong><br><span>Total issues</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $latest->broken_links_count + $externalBrokenLinks }}</strong><br><span>Broken links</span></div>
-            <div style="border:1px solid #fee2e2; border-radius:12px; padding:1rem;"><strong>{{ $criticalIssues }}</strong><br><span>Open errors</span></div>
-            <div style="border:1px solid #fef3c7; border-radius:12px; padding:1rem;"><strong>{{ $warningIssues }}</strong><br><span>Open warnings</span></div>
-            <div style="border:1px solid #dbeafe; border-radius:12px; padding:1rem;"><strong>{{ $noticeIssues }}</strong><br><span>Open notices</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $ignoredIssues }}</strong><br><span>Ignored</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $averageScore ?? '—' }}</strong><br><span>Avg score</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $pendingScans }}</strong><br><span>Pending</span></div>
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;"><strong>{{ $runningScans }}</strong><br><span>Running</span></div>
-            <div style="border:1px solid #fee2e2; border-radius:12px; padding:1rem;"><strong>{{ $failedScans }}</strong><br><span>Failed</span></div>
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            @foreach([
+                'Pages' => $latest->pages_count,
+                'Total issues' => $latest->issues_count,
+                'Broken links' => $latest->broken_links_count + $externalBrokenLinks,
+                'Open errors' => $criticalIssues,
+                'Open warnings' => $warningIssues,
+                'Open notices' => $noticeIssues,
+                'Ignored' => $ignoredIssues,
+                'Avg score' => $averageScore ?? '—',
+                'Pending' => $pendingScans,
+                'Running' => $runningScans,
+                'Failed' => $failedScans,
+            ] as $label => $value)
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <strong class="text-xl font-semibold text-slate-950">{{ $value }}</strong>
+                    <span class="mt-1 block text-sm text-slate-500">{{ $label }}</span>
+                </div>
+            @endforeach
         </div>
 
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem;">
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;">
-                <h3 style="margin:0 0 .75rem; font-size:1rem;">Score history</h3>
-                <div style="display:flex; align-items:end; gap:.35rem; height:110px; border-bottom:1px solid #e2e8f0; padding-top:.5rem;">
+        <div class="grid gap-4 lg:grid-cols-3">
+            <div class="rounded-2xl border border-slate-200 p-4">
+                <h3 class="mb-3 text-sm font-semibold text-slate-950">Score history</h3>
+                <div class="flex h-28 items-end gap-1 border-b border-slate-200 pt-2">
                     @foreach($scoreHistory as $scan)
-                        <div title="#{{ $scan->id }} · {{ $scan->score }}/100 · {{ $scan->created_at?->format('Y-m-d H:i') }}" style="flex:1; min-width:12px; height:{{ max(4, $scan->score) }}%; background:#334155; border-radius:6px 6px 0 0;"></div>
+                        <div class="min-w-3 flex-1 rounded-t-md bg-slate-700" title="#{{ $scan->id }} · {{ $scan->score }}/100 · {{ $scan->created_at?->format('Y-m-d H:i') }}" style="height: {{ max(4, $scan->score) }}%"></div>
                     @endforeach
                 </div>
             </div>
 
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;">
-                <h3 style="margin:0 0 .75rem; font-size:1rem;">Most common open issues</h3>
-                <div style="display:grid; gap:.5rem;">
+            <div class="rounded-2xl border border-slate-200 p-4">
+                <h3 class="mb-3 text-sm font-semibold text-slate-950">Most common open issues</h3>
+                <div class="grid gap-2 text-sm">
                     @forelse($commonIssueTypes as $issueType)
-                        <div style="display:flex; justify-content:space-between; gap:1rem;">
-                            <span><code>{{ $issueType->type }}</code> <small style="color:#64748b;">{{ $issueType->severity }}</small></span>
+                        <div class="flex justify-between gap-4">
+                            <span><code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">{{ $issueType->type }}</code> <small class="text-slate-500">{{ $issueType->severity }}</small></span>
                             <strong>{{ $issueType->aggregate }}</strong>
                         </div>
                     @empty
-                        <span style="color:#64748b;">No open issues in the latest scan.</span>
+                        <span class="text-slate-500">No open issues in the latest scan.</span>
                     @endforelse
                 </div>
             </div>
 
-            <div style="border:1px solid #e2e8f0; border-radius:12px; padding:1rem;">
-                <h3 style="margin:0 0 .75rem; font-size:1rem;">Weakest pages</h3>
-                <div style="display:grid; gap:.5rem;">
+            <div class="rounded-2xl border border-slate-200 p-4">
+                <h3 class="mb-3 text-sm font-semibold text-slate-950">Weakest pages</h3>
+                <div class="grid gap-2 text-sm">
                     @forelse($worstPages as $page)
-                        <div style="display:grid; gap:.15rem;">
-                            <strong>{{ $page->issues_count }} issues · {{ $page->errors_count }} errors</strong>
-                            <small style="word-break:break-all; color:#64748b;">{{ $page->url }}</small>
+                        <div class="grid gap-1">
+                            <strong class="text-slate-950">{{ $page->issues_count }} issues · {{ $page->errors_count }} errors</strong>
+                            <small class="break-all text-slate-500">{{ $page->url }}</small>
                         </div>
                     @empty
-                        <span style="color:#64748b;">No weak pages detected.</span>
+                        <span class="text-slate-500">No weak pages detected.</span>
                     @endforelse
                 </div>
             </div>
         </div>
 
-        <div style="border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
-            <table style="width:100%; border-collapse:collapse;">
-                <thead style="background:#f8fafc; text-align:left;">
+        <div class="overflow-auto rounded-2xl border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th style="padding:.75rem;">Date</th>
-                        <th style="padding:.75rem;">URL</th>
-                        <th style="padding:.75rem;">Status</th>
-                        <th style="padding:.75rem;">Score</th>
-                        <th style="padding:.75rem;">Pages</th>
-                        <th style="padding:.75rem;">Issues</th>
-                        <th style="padding:.75rem;"></th>
+                        <th class="px-4 py-3">Date</th>
+                        <th class="px-4 py-3">URL</th>
+                        <th class="px-4 py-3">Status</th>
+                        <th class="px-4 py-3">Score</th>
+                        <th class="px-4 py-3">Pages</th>
+                        <th class="px-4 py-3">Issues</th>
+                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-100 bg-white">
                     @foreach($scans as $scan)
-                        <tr style="border-top:1px solid #e2e8f0;">
-                            <td style="padding:.75rem; white-space:nowrap;">{{ $scan->created_at?->format('Y-m-d H:i') }}</td>
-                            <td style="padding:.75rem; word-break:break-all;">{{ $scan->start_url }}</td>
-                            <td style="padding:.75rem; white-space:nowrap;">{{ $scan->status }}</td>
-                            <td style="padding:.75rem;"><strong>{{ $scan->status === 'completed' ? $scan->score : '—' }}</strong></td>
-                            <td style="padding:.75rem;">{{ $scan->pages_count }}</td>
-                            <td style="padding:.75rem;">{{ $scan->issues_count }}</td>
-                            <td style="padding:.75rem; text-align:right;"><a href="{{ route('lazy-seo.scans.show', $scan) }}">Open</a></td>
+                        <tr>
+                            <td class="whitespace-nowrap px-4 py-3 text-slate-700">{{ $scan->created_at?->format('Y-m-d H:i') }}</td>
+                            <td class="break-all px-4 py-3 text-slate-700">{{ $scan->start_url }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 text-slate-700">{{ $scan->status }}</td>
+                            <td class="px-4 py-3 font-semibold text-slate-950">{{ $scan->status === 'completed' ? $scan->score : '—' }}</td>
+                            <td class="px-4 py-3 text-slate-700">{{ $scan->pages_count }}</td>
+                            <td class="px-4 py-3 text-slate-700">{{ $scan->issues_count }}</td>
+                            <td class="px-4 py-3 text-right"><a class="font-medium text-slate-950 underline underline-offset-4" href="{{ route('lazy-seo.scans.show', $scan) }}">Open</a></td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
     @else
-        <div style="border:1px dashed #cbd5e1; border-radius:12px; padding:1rem; color:#64748b;">
-            No scans yet. Run <code>php artisan lazy-seo:monitor https://example.com</code>.
+        <div class="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">
+            No scans yet. Run <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700">php artisan lazy-seo:monitor https://example.com</code>.
         </div>
     @endif
 </div>

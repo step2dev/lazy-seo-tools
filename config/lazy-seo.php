@@ -6,8 +6,9 @@ return [
     | Features
     |--------------------------------------------------------------------------
     |
-    | Start with the core meta/schema features, then enable the heavier modules
-    | only when the application needs them.
+    | Core features are enabled by default. Heavier modules are opt-in so a
+    | simple app can use meta/schema/redirects/sitemaps without carrying the
+    | crawler, monitoring dashboard, IndexNow, AI helpers, Livewire admin or API.
     |
     */
     'features' => [
@@ -176,6 +177,11 @@ return [
     'alerts' => [
         'enabled' => env('LAZY_SEO_ALERTS_ENABLED', false),
         'webhook_url' => env('LAZY_SEO_ALERT_WEBHOOK_URL'),
+    ],
+
+
+    'ui' => [
+        'tailwind_cdn' => env('LAZY_SEO_TAILWIND_CDN', false),
     ],
 
     'validation' => [

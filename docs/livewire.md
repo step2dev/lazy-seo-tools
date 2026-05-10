@@ -1,12 +1,23 @@
 # Livewire components
 
-Livewire components are registered when Livewire is installed and the `livewire` feature flag is enabled.
+Livewire is optional. The package does not require it for core SEO metadata, schema, redirects or sitemap generation.
+
+Install Livewire only when you want the package UI/admin layer:
+
+```bash
+composer require livewire/livewire
+```
+
+Enable the feature flags:
 
 ```php
 'features' => [
     'livewire' => true,
+    'admin' => true,
 ],
 ```
+
+If admin web routes are enabled without Livewire, Lazy SEO will fail fast with a clear config validation error instead of silently rendering broken pages.
 
 ## Components
 
@@ -21,7 +32,7 @@ Livewire components are registered when Livewire is installed and the `livewire`
 
 ## Admin routes
 
-Web admin routes are disabled by default. Enable them in `config/lazy-seo.php`:
+Web admin routes are disabled by default. Enable them explicitly:
 
 ```php
 'features' => [
@@ -32,7 +43,7 @@ Web admin routes are disabled by default. Enable them in `config/lazy-seo.php`:
 'routes' => [
     'web' => true,
     'admin_prefix' => 'lazy-seo',
-    'admin_middleware' => ['web', 'auth'],
+    'admin_middleware' => ['web', 'auth', 'can:manage-lazy-seo'],
 ],
 ```
 
@@ -45,11 +56,21 @@ Available pages:
 /lazy-seo/redirects
 ```
 
-Named routes:
+## Tailwind
 
-```text
-lazy-seo.dashboard
-lazy-seo.issues
-lazy-seo.scans.show
-lazy-seo.redirects
+Package Blade views use Tailwind utility classes. In real apps, add the package views to your Tailwind `content` paths:
+
+```js
+content: [
+    './resources/**/*.blade.php',
+    './vendor/step2dev/lazy-seo-tools/resources/views/**/*.blade.php',
+],
 ```
+
+For quick local previews only, you may enable the Tailwind CDN in the package admin pages:
+
+```env
+LAZY_SEO_TAILWIND_CDN=true
+```
+
+Keep this disabled in production when your app already compiles Tailwind.

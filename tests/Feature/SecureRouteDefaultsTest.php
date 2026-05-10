@@ -19,6 +19,7 @@ it('registers the default admin gate', function (): void {
 });
 
 it('rejects enabled admin routes without auth middleware', function (): void {
+    config()->set('lazy-seo.features.admin', true);
     config()->set('lazy-seo.routes.web', true);
     config()->set('lazy-seo.routes.admin_middleware', ['web', 'can:manage-lazy-seo']);
 
@@ -26,6 +27,7 @@ it('rejects enabled admin routes without auth middleware', function (): void {
 })->throws(InvalidArgumentException::class, 'Admin routes are enabled');
 
 it('rejects enabled admin routes without gate middleware', function (): void {
+    config()->set('lazy-seo.features.admin', true);
     config()->set('lazy-seo.routes.web', true);
     config()->set('lazy-seo.routes.admin_middleware', ['web', 'auth']);
 

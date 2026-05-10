@@ -100,3 +100,28 @@ Recommended production posture:
 ```
 
 Use synchronous `lazy-seo:crawl` only for local/manual checks. Use `lazy-seo:crawl-queue` or `lazy-seo:monitor --queue` for scheduled or large scans.
+
+
+## Crawler SSRF hardening
+
+The crawler blocks private network targets by default. This includes direct private IPs, loopback IPv6, userinfo URLs and IPv4 numeric tricks such as decimal, octal and hexadecimal host notation.
+
+Keep this disabled unless you intentionally crawl internal services:
+
+```env
+LAZY_SEO_CRAWLER_ALLOW_PRIVATE_NETWORKS=false
+```
+
+Recommended production setup:
+
+```php
+'crawler' => [
+    'allow_private_networks' => false,
+    'allowed_hosts' => ['example.com'],
+    'blocked_hosts' => [],
+    'max_redirects' => 5,
+    'max_body_kb' => 1024,
+],
+```
+
+Redirect targets are checked with the same policy, so a public URL cannot redirect the crawler into private infrastructure.

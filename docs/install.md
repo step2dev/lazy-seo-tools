@@ -137,3 +137,21 @@ API routes stay disabled until both the feature and routes are enabled:
     'api' => true,
 ],
 ```
+
+
+## Optional admin UI styling
+
+The optional Livewire/admin views are Tailwind-first. Add the package views to your app Tailwind config:
+
+```js
+content: [
+    './resources/**/*.blade.php',
+    './vendor/step2dev/lazy-seo-tools/resources/views/**/*.blade.php',
+],
+```
+
+For local preview only:
+
+```env
+LAZY_SEO_TAILWIND_CDN=true
+```
