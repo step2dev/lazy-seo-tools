@@ -179,7 +179,6 @@ return [
         'webhook_url' => env('LAZY_SEO_ALERT_WEBHOOK_URL'),
     ],
 
-
     'validation' => [
         'enabled' => env('LAZY_SEO_CONFIG_VALIDATION', true),
     ],
