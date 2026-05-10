@@ -296,7 +296,6 @@ class LazySeoServiceProvider extends PackageServiceProvider
         ];
     }
 
-
     protected function bridgeLazySeoRedirectsConfig(): void
     {
         /** @var array<string, mixed> $redirects */
