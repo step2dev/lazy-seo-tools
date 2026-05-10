@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Services;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Step2dev\LazySeoTools\Data\SeoHistorySummary;
 use Step2dev\LazySeoTools\Models\SeoScan;
@@ -92,7 +93,8 @@ class SeoHistoryService
             ->get();
     }
 
-    protected function baseQuery(?string $startUrl)
+    /** @return Builder<SeoScan> */
+    protected function baseQuery(?string $startUrl): Builder
     {
         return SeoScan::query()
             ->when($startUrl, fn ($query) => $query->where('start_url', $startUrl));

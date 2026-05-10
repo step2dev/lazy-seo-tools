@@ -3,10 +3,9 @@
 namespace Step2dev\LazySeoTools;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schedule;
 use Livewire\Livewire;
-use Livewire\LivewireManager;
-use Livewire\Mechanisms\ComponentRegistry;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Step2dev\LazySeoTools\Commands\ContentIntelligenceCommand;
@@ -20,6 +19,7 @@ use Step2dev\LazySeoTools\Commands\MonitorSeoCommand;
 use Step2dev\LazySeoTools\Commands\QueueSeoScanCommand;
 use Step2dev\LazySeoTools\Commands\SeoHistoryCommand;
 use Step2dev\LazySeoTools\Commands\WarmSitemapCommand;
+use Step2dev\LazySeoTools\Contracts\AIProvider;
 use Step2dev\LazySeoTools\Contracts\SeoResolver;
 use Step2dev\LazySeoTools\Http\Livewire\RedirectTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoAnalyzerLivewire;
@@ -27,7 +27,11 @@ use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
 use Step2dev\LazySeoTools\Http\Livewire\SeoIssuesTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoMonitoringDashboard;
 use Step2dev\LazySeoTools\Http\Livewire\SeoScanDetail;
+use Step2dev\LazySeoTools\Services\AI\OpenAIProvider;
+use Step2dev\LazySeoTools\Services\AISeoService;
+use Step2dev\LazySeoTools\Services\AISeoWriterService;
 use Step2dev\LazySeoTools\Services\CanonicalService;
+use Step2dev\LazySeoTools\Services\CTRPredictorService;
 use Step2dev\LazySeoTools\Services\ContentIntelligenceService;
 use Step2dev\LazySeoTools\Services\IndexNowService;
 use Step2dev\LazySeoTools\Services\JsonLdService;
@@ -46,6 +50,7 @@ use Step2dev\LazySeoTools\Services\SeoScanReportService;
 use Step2dev\LazySeoTools\Services\SiteCrawlerService;
 use Step2dev\LazySeoTools\Services\SitemapGeneratorService;
 use Step2dev\LazySeoTools\Services\UrlNormalizer;
+use Step2dev\LazySeoTools\Support\LazySeoConfigValidator;
 use Step2dev\LazySeoTools\View\Components\JsonLdComponent;
 use Step2dev\LazySeoTools\View\Components\MetaComponent;
 use Step2dev\LazySeoTools\View\Components\OgComponent;
@@ -97,28 +102,68 @@ class LazySeoServiceProvider extends PackageServiceProvider
         $this->app->alias(SeoManager::class, 'lazy-seo');
         $this->app->alias(SeoManager::class, 'lazy-seo-manager');
 
-        $this->app->singleton(SitemapGeneratorService::class);
+        $this->app->singleton(LazySeoConfigValidator::class);
+
+        $this->registerCoreServices();
+        $this->registerOptionalServices();
+    }
+
+
+    protected function registerCoreServices(): void
+    {
         $this->app->singleton(UrlNormalizer::class);
-        $this->app->singleton(SiteCrawlerService::class);
-        $this->app->singleton(RedirectImportExportService::class);
         $this->app->singleton(SeoAnalyzerService::class);
-        $this->app->singleton(SeoAuditService::class);
-        $this->app->singleton(SeoScanReportService::class);
-        $this->app->singleton(SeoAlertService::class);
-        $this->app->singleton(SeoDashboardService::class);
-        $this->app->singleton(SeoMonitoringService::class);
-        $this->app->singleton(IndexNowService::class);
-        $this->app->singleton(ContentIntelligenceService::class);
-        $this->app->singleton(SeoHistoryService::class);
         $this->app->singleton(SchemaService::class);
         $this->app->singleton(CanonicalService::class);
         $this->app->singleton(JsonLdService::class);
         $this->app->singleton(OgMetaService::class);
-        $this->app->singleton(OGImageService::class);
+        $this->app->singleton(SitemapGeneratorService::class);
+        $this->app->singleton(AIProvider::class, OpenAIProvider::class);
+
+        if ($this->featureEnabled('redirects')) {
+            $this->app->singleton(RedirectImportExportService::class);
+        }
+    }
+
+    protected function registerOptionalServices(): void
+    {
+        if ($this->featureEnabled('crawler')) {
+            $this->app->singleton(SiteCrawlerService::class);
+            $this->app->singleton(SeoAuditService::class);
+            $this->app->singleton(SeoScanReportService::class);
+        }
+
+        if ($this->featureEnabled('monitoring')) {
+            $this->app->singleton(SeoAlertService::class);
+            $this->app->singleton(SeoDashboardService::class);
+            $this->app->singleton(SeoMonitoringService::class);
+            $this->app->singleton(SeoHistoryService::class);
+        }
+
+        if ($this->featureEnabled('indexnow')) {
+            $this->app->singleton(IndexNowService::class);
+        }
+
+        if ($this->featureEnabled('content_intelligence')) {
+            $this->app->singleton(ContentIntelligenceService::class);
+        }
+
+        if ($this->featureEnabled('og_image')) {
+            $this->app->singleton(OGImageService::class);
+        }
+
+        if ((bool) config('lazy-seo.ai.enabled', false)) {
+            $this->app->singleton(AISeoService::class);
+            $this->app->singleton(AISeoWriterService::class);
+            $this->app->singleton(CTRPredictorService::class);
+        }
     }
 
     public function packageBooted(): void
     {
+        $this->app->make(LazySeoConfigValidator::class)->validate();
+        $this->registerAdminGate();
+
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'seo');
 
         if ($this->featureEnabled('meta')) {
@@ -152,21 +197,46 @@ class LazySeoServiceProvider extends PackageServiceProvider
         }
     }
 
-    protected function registerLivewireComponents(): void
+
+    protected function registerAdminGate(): void
     {
-        if (! $this->app->bound('livewire') || ! $this->app->bound(ComponentRegistry::class)) {
+        if (! (bool) config('lazy-seo.routes.admin_gate_enabled', true)) {
             return;
         }
 
-        /** @var LivewireManager $livewire */
-        $livewire = $this->app->make('livewire');
+        $ability = (string) config('lazy-seo.routes.admin_gate', 'manage-lazy-seo');
 
-        $livewire->component('lazy-seo-form', SeoForm::class);
-        $livewire->component('lazy-seo-analyzer', SeoAnalyzerLivewire::class);
-        $livewire->component('lazy-seo-redirect-table', RedirectTable::class);
-        $livewire->component('lazy-seo-monitoring-dashboard', SeoMonitoringDashboard::class);
-        $livewire->component('lazy-seo-issues-table', SeoIssuesTable::class);
-        $livewire->component('lazy-seo-scan-detail', SeoScanDetail::class);
+        if ($ability === '' || Gate::has($ability)) {
+            return;
+        }
+
+        Gate::define($ability, static function (mixed $user): bool {
+            if (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('manage seo')) {
+                return true;
+            }
+
+            if (method_exists($user, 'can')) {
+                return (bool) $user->can('manage seo');
+            }
+
+            return false;
+        });
+    }
+
+    protected function registerLivewireComponents(): void
+    {
+        $components = [
+            'lazy-seo-form' => SeoForm::class,
+            'lazy-seo-analyzer' => SeoAnalyzerLivewire::class,
+            'lazy-seo-redirect-table' => RedirectTable::class,
+            'lazy-seo-monitoring-dashboard' => SeoMonitoringDashboard::class,
+            'lazy-seo-issues-table' => SeoIssuesTable::class,
+            'lazy-seo-scan-detail' => SeoScanDetail::class,
+        ];
+
+        foreach ($components as $name => $component) {
+            Livewire::component($name, $component);
+        }
     }
 
     protected function featureEnabled(string $feature): bool

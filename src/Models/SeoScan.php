@@ -7,7 +7,37 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $start_url
+ * @property int|null $previous_scan_id
+ * @property string $status
+ * @property int $score
+ * @property int $score_delta
+ * @property int $pages_count
+ * @property int $issues_count
+ * @property int $new_issues_count
+ * @property int $resolved_issues_count
+ * @property int $broken_links_count
+ * @property int $external_broken_links_count
+ * @property int $redirect_chains_count
+ * @property int $duplicate_titles_count
+ * @property int $duplicate_descriptions_count
+ * @property int $canonical_conflicts_count
+ * @property array<string, mixed>|null $summary
+ * @property array<int, array<string, mixed>>|null $regressions
+ * @property array<int, array<string, mixed>>|null $resolved_issues
+ * @property array<string, mixed>|null $options
+ * @property string|null $failure_reason
+ * @property Carbon|null $started_at
+ * @property Carbon|null $finished_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read SeoScan|null $previousScan
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, SeoScanIssue> $issues
+ */
 class SeoScan extends Model
 {
     use HasFactory;

@@ -16,15 +16,20 @@ class SiteCrawlerService
     public function crawl(string $startUrl, array $options = []): CrawlResult
     {
         $startUrl = $this->urls->normalize($startUrl) ?? $startUrl;
-        $maxPages = (int) ($options['max_pages'] ?? config('lazy-seo.crawler.max_pages', 50));
-        $timeout = (int) ($options['timeout'] ?? config('lazy-seo.crawler.timeout', 10));
+        $maxPages = max(1, (int) ($options['max_pages'] ?? config('lazy-seo.crawler.max_pages', 50)));
+        $maxDepth = max(0, (int) ($options['max_depth'] ?? config('lazy-seo.crawler.max_depth', 5)));
+        $timeout = max(1, (int) ($options['timeout'] ?? config('lazy-seo.crawler.timeout', 10)));
         $respectNoindex = (bool) ($options['respect_noindex'] ?? config('lazy-seo.crawler.respect_noindex', false));
+        $respectRobotsTxt = (bool) ($options['respect_robots_txt'] ?? config('lazy-seo.crawler.respect_robots_txt', true));
         $checkExternalLinks = (bool) ($options['check_external_links'] ?? config('lazy-seo.crawler.check_external_links', false));
-        $maxExternalLinks = (int) ($options['max_external_links'] ?? config('lazy-seo.crawler.max_external_links', 50));
+        $maxExternalLinks = max(0, (int) ($options['max_external_links'] ?? config('lazy-seo.crawler.max_external_links', 50)));
         $userAgent = (string) ($options['user_agent'] ?? config('lazy-seo.crawler.user_agent', 'LazySeoBot/1.0'));
         $exclude = (array) ($options['exclude'] ?? config('lazy-seo.crawler.exclude', []));
+        $rateLimitMs = max(0, (int) ($options['rate_limit_ms'] ?? config('lazy-seo.crawler.rate_limit_ms', 250)));
+        $security = $this->securityOptions($options);
+        $robotsRules = $respectRobotsTxt ? $this->robotsRules($startUrl, $timeout, $userAgent, $security) : [];
 
-        $queue = [$startUrl];
+        $queue = [['url' => $startUrl, 'depth' => 0]];
         $visited = [];
         $pages = [];
         $incoming = [];
@@ -32,30 +37,36 @@ class SiteCrawlerService
         $externalBrokenLinks = [];
         $externalCandidates = [];
         $redirectChains = [];
+        $lastRequestAt = null;
 
         while ($queue !== [] && count($visited) < $maxPages) {
-            $url = array_shift($queue);
+            /** @var array{url: string, depth: int} $item */
+            $item = array_shift($queue);
+            $url = $item['url'];
+            $depth = $item['depth'];
 
-            if (! is_string($url) || isset($visited[$url]) || $this->isExcluded($url, $exclude)) {
+            if (isset($visited[$url]) || $this->isExcluded($url, $exclude) || ! $this->isAllowedByRobots($url, $robotsRules)) {
                 continue;
             }
 
             $visited[$url] = true;
-            $page = $this->fetch($url, $timeout, $userAgent);
+            $this->throttle($lastRequestAt, $rateLimitMs);
+            $page = $this->fetch($url, $timeout, $userAgent, $security);
+            $lastRequestAt = microtime(true);
             $pages[] = $page;
 
             if ($page->redirects !== []) {
                 $redirectChains[$url] = $page->redirects;
             }
 
-            if (! $page->ok() || ($respectNoindex && in_array('noindex', $page->robots, true))) {
+            if (! $page->ok() || $depth >= $maxDepth || ($respectNoindex && in_array('noindex', $page->robots, true))) {
                 continue;
             }
 
             foreach ($page->links as $link) {
                 $target = $link['url'] ?? null;
 
-                if (! is_string($target)) {
+                if (! is_string($target) || ! $this->isUrlAllowed($target, $security) || ! $this->isAllowedByRobots($target, $robotsRules)) {
                     continue;
                 }
 
@@ -71,8 +82,10 @@ class SiteCrawlerService
                     continue;
                 }
 
-                if (! isset($visited[$target]) && ! in_array($target, $queue, true) && count($visited) + count($queue) < $maxPages) {
-                    $queue[] = $target;
+                $alreadyQueued = collect($queue)->contains(fn (array $queued): bool => $queued['url'] === $target);
+
+                if (! isset($visited[$target]) && ! $alreadyQueued && count($visited) + count($queue) < $maxPages) {
+                    $queue[] = ['url' => $target, 'depth' => $depth + 1];
                 }
             }
         }
@@ -86,7 +99,7 @@ class SiteCrawlerService
         }
 
         if ($checkExternalLinks) {
-            $externalBrokenLinks = $this->checkExternalLinks($externalCandidates, $timeout, $userAgent);
+            $externalBrokenLinks = $this->checkExternalLinks($externalCandidates, $timeout, $userAgent, $security, $rateLimitMs);
         }
 
         return new CrawlResult(
@@ -102,25 +115,50 @@ class SiteCrawlerService
         );
     }
 
-    protected function fetch(string $url, int $timeout, string $userAgent): CrawledPage
+    /** @param array<string, mixed> $security */
+    protected function fetch(string $url, int $timeout, string $userAgent, array $security): CrawledPage
     {
+        if (! $this->isUrlAllowed($url, $security)) {
+            return new CrawledPage(url: $url, status: 0, error: 'URL blocked by crawler security policy.');
+        }
+
+        $currentUrl = $url;
+        $redirects = [];
+
         try {
-            $response = Http::timeout($timeout)
-                ->withHeaders(['User-Agent' => $userAgent])
-                ->withOptions(['allow_redirects' => ['track_redirects' => true]])
-                ->get($url);
+            for ($attempt = 0; $attempt <= $security['max_redirects']; $attempt++) {
+                $response = Http::timeout($timeout)
+                    ->retry((int) $security['retry_times'], (int) $security['retry_sleep'], throw: false)
+                    ->withHeaders(['User-Agent' => $userAgent])
+                    ->withOptions(['allow_redirects' => false])
+                    ->get($currentUrl);
 
-            $html = (string) $response->body();
-            $redirectUrl = $response->handlerStats()['redirect_url'] ?? null;
-            $redirects = is_string($redirectUrl) && $redirectUrl !== '' ? [$redirectUrl] : [];
+                $status = $response->status();
 
-            if ($redirects === [] && $response->header('X-Guzzle-Redirect-History')) {
-                $redirects = array_filter(array_map('trim', explode(',', (string) $response->header('X-Guzzle-Redirect-History'))));
+                if (! in_array($status, [301, 302, 303, 307, 308], true)) {
+                    $html = $this->limitedBody((string) $response->body(), (int) $security['max_body_kb']);
+
+                    return $this->parse($currentUrl, $status, $html, $redirects);
+                }
+
+                $location = $response->header('Location');
+                $nextUrl = is_string($location) ? $this->urls->normalize($location, $currentUrl) : null;
+
+                if (! $nextUrl || ! $this->isUrlAllowed($nextUrl, $security)) {
+                    return new CrawledPage(url: $currentUrl, status: $status, redirects: $redirects, error: 'Redirect target blocked by crawler security policy.');
+                }
+
+                if (in_array($nextUrl, $redirects, true) || $nextUrl === $url) {
+                    return new CrawledPage(url: $currentUrl, status: $status, redirects: $redirects, error: 'Redirect loop detected.');
+                }
+
+                $redirects[] = $nextUrl;
+                $currentUrl = $nextUrl;
             }
 
-            return $this->parse($url, $response->status(), $html, $redirects);
+            return new CrawledPage(url: $currentUrl, status: 0, redirects: $redirects, error: 'Maximum redirect count exceeded.');
         } catch (\Throwable $e) {
-            return new CrawledPage(url: $url, status: 0, error: $e->getMessage());
+            return new CrawledPage(url: $currentUrl, status: 0, redirects: $redirects, error: $e->getMessage());
         }
     }
 
@@ -237,54 +275,52 @@ class SiteCrawlerService
     {
         preg_match_all('/<img\b[^>]*>/i', $html, $matches);
 
-        return array_map(function (string $tag) use ($baseUrl): array {
-            preg_match('/\ssrc\s*=\s*(["\'])(.*?)\1/i', $tag, $src);
-            preg_match('/\salt\s*=\s*(["\'])(.*?)\1/i', $tag, $alt);
-
-            return [
-                'src' => isset($src[2]) ? $this->urls->normalize($src[2], $baseUrl) : null,
-                'alt' => $alt[2] ?? null,
-                'missing_alt' => ! isset($alt[2]) || trim($alt[2]) === '',
-            ];
-        }, $matches[0]);
-    }
-
-    protected function isExcluded(string $url, array $exclude): bool
-    {
-        $path = trim(parse_url($url, PHP_URL_PATH) ?: '/', '/');
-
-        foreach ($exclude as $pattern) {
-            $pattern = trim((string) $pattern, '/');
-            $regex = '#^'.str_replace('\\*', '.*', preg_quote($pattern, '#')).'$#u';
-
-            if (preg_match($regex, $path)) {
-                return true;
+        return array_values(array_filter(array_map(function (string $tag) use ($baseUrl): ?array {
+            if (! preg_match('/src\s*=\s*(["\'])(.*?)\1/i', $tag, $srcMatch)) {
+                return null;
             }
-        }
 
-        return false;
+            $src = $this->urls->normalize($srcMatch[2], $baseUrl);
+
+            if (! $src) {
+                return null;
+            }
+
+            $alt = preg_match('/alt\s*=\s*(["\'])(.*?)\1/i', $tag, $altMatch)
+                ? trim(html_entity_decode($altMatch[2]))
+                : '';
+
+            return ['src' => $src, 'alt' => $alt];
+        }, $matches[0])));
     }
 
-    /**
-     * @param  array<string, array<int, string>>  $externalCandidates
-     * @return array<string, array<string, mixed>>
-     */
-    protected function checkExternalLinks(array $externalCandidates, int $timeout, string $userAgent): array
+    protected function checkExternalLinks(array $links, int $timeout, string $userAgent, array $security, int $rateLimitMs): array
     {
         $broken = [];
+        $lastRequestAt = null;
 
-        foreach ($externalCandidates as $url => $sources) {
+        foreach ($links as $url => $sources) {
+            if (! $this->isUrlAllowed($url, $security)) {
+                continue;
+            }
+
             try {
+                $this->throttle($lastRequestAt, $rateLimitMs);
                 $response = Http::timeout($timeout)
+                    ->retry((int) $security['retry_times'], (int) $security['retry_sleep'], throw: false)
                     ->withHeaders(['User-Agent' => $userAgent])
-                    ->withOptions(['allow_redirects' => true])
+                    ->withOptions(['allow_redirects' => false])
                     ->head($url);
+                $lastRequestAt = microtime(true);
 
                 if ($response->status() === 405) {
+                    $this->throttle($lastRequestAt, $rateLimitMs);
                     $response = Http::timeout($timeout)
+                        ->retry((int) $security['retry_times'], (int) $security['retry_sleep'], throw: false)
                         ->withHeaders(['User-Agent' => $userAgent])
-                        ->withOptions(['allow_redirects' => true])
+                        ->withOptions(['allow_redirects' => false])
                         ->get($url);
+                    $lastRequestAt = microtime(true);
                 }
 
                 if ($response->status() >= 400) {
@@ -356,5 +392,210 @@ class SiteCrawlerService
             ->filter(fn (string $url): bool => $url !== $startUrl && empty($incoming[$url]))
             ->values()
             ->all();
+    }
+
+    /** @return array<string, mixed> */
+    protected function securityOptions(array $options): array
+    {
+        return [
+            'allow_private_networks' => (bool) ($options['allow_private_networks'] ?? config('lazy-seo.crawler.allow_private_networks', false)),
+            'allowed_hosts' => array_map('strtolower', (array) ($options['allowed_hosts'] ?? config('lazy-seo.crawler.allowed_hosts', []))),
+            'blocked_hosts' => array_map('strtolower', (array) ($options['blocked_hosts'] ?? config('lazy-seo.crawler.blocked_hosts', []))),
+            'max_redirects' => max(0, (int) ($options['max_redirects'] ?? config('lazy-seo.crawler.max_redirects', 5))),
+            'max_body_kb' => max(1, (int) ($options['max_body_kb'] ?? config('lazy-seo.crawler.max_body_kb', 1024))),
+            'retry_times' => max(0, (int) ($options['retry_times'] ?? config('lazy-seo.crawler.retry_times', 1))),
+            'retry_sleep' => max(0, (int) ($options['retry_sleep'] ?? config('lazy-seo.crawler.retry_sleep', 250))),
+        ];
+    }
+
+    /** @param array<int, string> $exclude */
+    protected function isExcluded(string $url, array $exclude): bool
+    {
+        foreach ($exclude as $pattern) {
+            $pattern = trim((string) $pattern);
+
+            if ($pattern === '') {
+                continue;
+            }
+
+            $quoted = str_replace('\*', '.*', preg_quote($pattern, '#'));
+
+            if (preg_match('#'.$quoted.'#i', $url) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<string, mixed> $security */
+    protected function isUrlAllowed(string $url, array $security): bool
+    {
+        $parts = parse_url($url);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = strtolower((string) ($parts['host'] ?? ''));
+
+        if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
+            return false;
+        }
+
+        if ($this->hostMatches($host, (array) $security['blocked_hosts'])) {
+            return false;
+        }
+
+        $allowedHosts = (array) $security['allowed_hosts'];
+
+        if ($allowedHosts !== [] && ! $this->hostMatches($host, $allowedHosts)) {
+            return false;
+        }
+
+        if ((bool) $security['allow_private_networks']) {
+            return true;
+        }
+
+        return ! $this->hostResolvesToPrivateNetwork($host);
+    }
+
+    protected function hostMatches(string $host, array $patterns): bool
+    {
+        foreach ($patterns as $pattern) {
+            $pattern = strtolower(trim((string) $pattern));
+
+            if ($pattern === '' || $pattern === '*') {
+                continue;
+            }
+
+            if ($host === $pattern || str_ends_with($host, '.'.ltrim($pattern, '.'))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function hostResolvesToPrivateNetwork(string $host): bool
+    {
+        $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : gethostbynamel($host);
+
+        if ($ips === false || $ips === []) {
+            return true;
+        }
+
+        foreach ($ips as $ip) {
+            if (! $this->isPublicIp($ip)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function isPublicIp(string $ip): bool
+    {
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+    }
+
+    protected function limitedBody(string $body, int $maxBodyKb): string
+    {
+        return substr($body, 0, $maxBodyKb * 1024);
+    }
+
+    protected function throttle(?float $lastRequestAt, int $rateLimitMs): void
+    {
+        if ($lastRequestAt === null || $rateLimitMs <= 0) {
+            return;
+        }
+
+        $elapsedMs = (microtime(true) - $lastRequestAt) * 1000;
+        $sleepMs = $rateLimitMs - $elapsedMs;
+
+        if ($sleepMs > 0) {
+            usleep((int) ($sleepMs * 1000));
+        }
+    }
+
+    /** @param array<string, mixed> $security @return array<int, string> */
+    protected function robotsRules(string $startUrl, int $timeout, string $userAgent, array $security): array
+    {
+        $parts = parse_url($startUrl);
+        $scheme = $parts['scheme'] ?? null;
+        $host = $parts['host'] ?? null;
+
+        if (! is_string($scheme) || ! is_string($host)) {
+            return [];
+        }
+
+        $robotsUrl = $scheme.'://'.$host.'/robots.txt';
+
+        if (! $this->isUrlAllowed($robotsUrl, $security)) {
+            return [];
+        }
+
+        try {
+            $response = Http::timeout($timeout)
+                ->retry((int) $security['retry_times'], (int) $security['retry_sleep'], throw: false)
+                ->withHeaders(['User-Agent' => $userAgent])
+                ->get($robotsUrl);
+
+            if (! $response->successful()) {
+                return [];
+            }
+
+            return $this->parseRobotsDisallowRules((string) $response->body());
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /** @return array<int, string> */
+    protected function parseRobotsDisallowRules(string $robotsTxt): array
+    {
+        $rules = [];
+        $applies = false;
+
+        foreach (preg_split('/\R/', $robotsTxt) ?: [] as $line) {
+            $line = trim((string) preg_replace('/#.*/', '', $line));
+
+            if ($line === '') {
+                continue;
+            }
+
+            if (str_starts_with(strtolower($line), 'user-agent:')) {
+                $agent = strtolower(trim(substr($line, strlen('user-agent:'))));
+                $applies = $agent === '*';
+
+                continue;
+            }
+
+            if ($applies && str_starts_with(strtolower($line), 'disallow:')) {
+                $path = trim(substr($line, strlen('disallow:')));
+
+                if ($path !== '') {
+                    $rules[] = $path;
+                }
+            }
+        }
+
+        return array_values(array_unique($rules));
+    }
+
+    /** @param array<int, string> $rules */
+    protected function isAllowedByRobots(string $url, array $rules): bool
+    {
+        if ($rules === []) {
+            return true;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH) ?: '/';
+
+        foreach ($rules as $rule) {
+            $pattern = '#^'.str_replace('\\*', '.*', preg_quote($rule, '#')).'#';
+
+            if (preg_match($pattern, $path)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

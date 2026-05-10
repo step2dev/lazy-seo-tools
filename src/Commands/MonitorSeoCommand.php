@@ -11,6 +11,8 @@ class MonitorSeoCommand extends Command
     public $signature = 'lazy-seo:monitor
         {url? : URL to scan. Defaults to lazy-seo.monitoring.url or app.url}
         {--max-pages= : Maximum pages to crawl}
+        {--max-depth= : Maximum internal link depth}
+        {--rate-limit-ms= : Delay between crawler HTTP requests in milliseconds}
         {--check-external : Check external links with HEAD/GET requests}
         {--max-external-links= : Maximum external links to check}
         {--queue : Dispatch scan to queue instead of running synchronously}
@@ -32,6 +34,8 @@ class MonitorSeoCommand extends Command
 
         $options = array_filter([
             'max_pages' => $this->option('max-pages') ? (int) $this->option('max-pages') : null,
+            'max_depth' => $this->option('max-depth') ? (int) $this->option('max-depth') : null,
+            'rate_limit_ms' => $this->option('rate-limit-ms') !== null ? (int) $this->option('rate-limit-ms') : null,
             'check_external_links' => $this->option('check-external') ? true : null,
             'max_external_links' => $this->option('max-external-links') ? (int) $this->option('max-external-links') : null,
         ], static fn ($value): bool => $value !== null);
@@ -54,6 +58,12 @@ class MonitorSeoCommand extends Command
             $this->line('Status: '.$scan->status);
 
             return self::SUCCESS;
+        }
+
+        if ((bool) config('lazy-seo.crawler.queue_only', false)) {
+            $this->components->error('Synchronous crawling is disabled by lazy-seo.crawler.queue_only. Use --queue.');
+
+            return self::FAILURE;
         }
 
         $scan = $monitoring->scan($url, $options);

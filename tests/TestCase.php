@@ -9,31 +9,24 @@ abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
-        return [
-            LazySeoServiceProvider::class,
-        ];
+        return [LazySeoServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('app.name', 'Laravel');
-        $app['config']->set('app.url', 'https://example.com');
-        $app['config']->set('app.key', 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=');
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
             'driver' => 'sqlite',
             'database' => ':memory:',
             'prefix' => '',
+            'foreign_key_constraints' => true,
         ]);
-
-        $app['config']->set('lazy-seo.routes.api', true);
-        $app['config']->set('lazy-seo.routes.web', true);
-        $app['config']->set('lazy-seo.routes.api_middleware', ['api']);
-        $app['config']->set('session.driver', 'array');
     }
 
-    protected function defineDatabaseMigrations(): void
+    protected function setUp(): void
     {
+        parent::setUp();
+
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 }

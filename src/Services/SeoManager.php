@@ -49,7 +49,9 @@ class SeoManager extends SeoService implements SeoResolver
         }
 
         if ($model->relationLoaded('seo')) {
-            return $model->seo ?: $this->fallbackSeo();
+            $seo = $model->getRelationValue('seo');
+
+            return $seo instanceof Seo ? $seo : $this->fallbackSeo();
         }
 
         $key = $model->getKey();
@@ -58,7 +60,11 @@ class SeoManager extends SeoService implements SeoResolver
             return $this->fallbackSeo();
         }
 
-        return $this->remember($this->cacheKey('model', $model::class.':'.$key), fn (): Seo => $model->seo()->first() ?: $this->fallbackSeo());
+        return $this->remember($this->cacheKey('model', $model::class.':'.$key), function () use ($model): Seo {
+            $seo = $model->seo()->first();
+
+            return $seo instanceof Seo ? $seo : $this->fallbackSeo();
+        });
     }
 
     public function current(): Seo
@@ -292,7 +298,7 @@ class SeoManager extends SeoService implements SeoResolver
             }
         }
 
-        foreach ((array) $template->payload as $key => $value) {
+        foreach ((array) ($template->payload ?? []) as $key => $value) {
             if (is_scalar($value)) {
                 $data[$key] = $this->replacePlaceholders((string) $value, $context);
             }

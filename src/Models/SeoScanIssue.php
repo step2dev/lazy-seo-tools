@@ -6,7 +6,26 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $seo_scan_id
+ * @property string|null $url
+ * @property string $type
+ * @property string $severity
+ * @property string $status
+ * @property string $message
+ * @property string|null $fingerprint
+ * @property array<string, mixed>|null $context
+ * @property Carbon|null $resolved_at
+ * @property Carbon|null $ignored_at
+ * @property string|null $note
+ * @property int|string|null $aggregate
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read SeoScan $scan
+ */
 class SeoScanIssue extends Model
 {
     use HasFactory;

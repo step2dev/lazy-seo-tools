@@ -188,6 +188,7 @@ class SitemapGeneratorService
             }
 
             $query->chunkById((int) ($sourceConfig['chunk'] ?? 500), function ($models) use (&$items, $sourceConfig): void {
+                /** @var \Illuminate\Database\Eloquent\Collection<int, Model> $models */
                 foreach ($models as $model) {
                     $loc = $this->modelUrl($model, $sourceConfig);
 
@@ -197,7 +198,7 @@ class SitemapGeneratorService
 
                     $items[] = array_filter([
                         'loc' => $loc,
-                        'lastmod' => $model->{$sourceConfig['lastmod_column'] ?? 'updated_at'} ?? null,
+                        'lastmod' => $model->getAttribute((string) ($sourceConfig['lastmod_column'] ?? 'updated_at')),
                         'changefreq' => $sourceConfig['changefreq'] ?? config('lazy-seo.sitemap.default_change_frequency', 'weekly'),
                         'priority' => $sourceConfig['priority'] ?? config('lazy-seo.sitemap.default_priority', 0.8),
                         'images' => $this->modelImages($model, $sourceConfig),
@@ -228,7 +229,9 @@ class SitemapGeneratorService
         }
 
         if (method_exists($model, 'getUrlAttribute')) {
-            return $model->url;
+            $url = $model->getAttribute('url');
+
+            return is_string($url) ? $url : null;
         }
 
         return null;

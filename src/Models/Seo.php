@@ -5,18 +5,24 @@ namespace Step2dev\LazySeoTools\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
 /**
  * @property int $id
  * @property string|null $url
- * @property string|null $title
- * @property string|null $description
- * @property string|null $keywords
+ * @property string|null $url_hash
+ * @property array<string, string>|null $title
+ * @property array<string, string>|null $description
+ * @property array<string, string>|null $keywords
  * @property string|null $canonical_url
- * @property array|null $robots
+ * @property array<int, string>|null $robots
  * @property bool $indexable
+ * @property string|null $seoable_type
+ * @property int|null $seoable_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class Seo extends Model
 {

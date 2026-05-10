@@ -38,11 +38,13 @@ return [
     'routes' => [
         'web' => false,
         'admin_prefix' => 'lazy-seo',
-        'admin_middleware' => ['web'],
+        'admin_middleware' => ['web', 'auth', 'can:manage-lazy-seo'],
+        'admin_gate' => 'manage-lazy-seo',
+        'admin_gate_enabled' => true,
         'api' => false,
         'api_prefix' => 'seo',
         'api_middleware' => ['api'],
-        'api_write_middleware' => [],
+        'api_write_middleware' => ['auth:sanctum'],
         'api_allow_morph_binding' => false,
     ],
 
@@ -168,11 +170,22 @@ return [
     'crawler' => [
         'enabled' => true,
         'max_pages' => 50,
+        'max_depth' => 5,
         'timeout' => 10,
+        'retry_times' => 1,
+        'retry_sleep' => 250,
+        'rate_limit_ms' => 250,
+        'queue_only' => false,
         'user_agent' => 'LazySeoBot/1.0',
         'respect_noindex' => false,
+        'respect_robots_txt' => true,
         'check_external_links' => false,
         'max_external_links' => 50,
+        'max_redirects' => 5,
+        'max_body_kb' => 1024,
+        'allow_private_networks' => false,
+        'allowed_hosts' => [],
+        'blocked_hosts' => [],
         'exclude' => [
             'admin/*',
             'nova/*',
@@ -217,5 +230,19 @@ return [
         'internal_link_minimum' => 1,
     ],
 
+    'ai' => [
+        'enabled' => false,
+        'provider' => 'openai',
+        'token' => null,
+        'model' => 'gpt-4o-mini',
+        'timeout' => 15,
+        'retry_times' => 1,
+        'retry_sleep' => 250,
+    ],
+
     'ai_token' => null,
+
+    'validation' => [
+        'enabled' => true,
+    ],
 ];

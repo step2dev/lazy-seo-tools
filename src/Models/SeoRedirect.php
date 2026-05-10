@@ -4,9 +4,11 @@ namespace Step2dev\LazySeoTools\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
+ * @property int $id
  * @property string $old_url
  * @property string|null $normalized_old_url
  * @property string|null $normalized_old_url_hash
@@ -15,6 +17,9 @@ use Illuminate\Support\Facades\Cache;
  * @property bool $enabled
  * @property bool $is_regex
  * @property int $hits
+ * @property Carbon|null $last_hit_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class SeoRedirect extends Model
 {

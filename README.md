@@ -144,7 +144,7 @@ Table names are configured directly in the published config file and intentional
 
 Change them before running migrations if your application needs custom names.
 
-Runtime settings like routes, sitemap path, crawler limits, queue settings, alerts, IndexNow and AI token may use `env()` inside the config.
+Runtime settings like routes, sitemap path, crawler limits, queue settings, alerts, IndexNow and AI settings may use `env()` inside the config. AI calls are disabled by default and return safe empty fallbacks until explicitly enabled with a token.
 
 ### Feature flags
 
@@ -518,10 +518,10 @@ Run a crawl from CLI:
 php artisan lazy-seo:crawl https://example.com
 ```
 
-Limit pages:
+Limit pages/depth and slow down requests:
 
 ```bash
-php artisan lazy-seo:crawl https://example.com --max-pages=100
+php artisan lazy-seo:crawl https://example.com --max-pages=100 --max-depth=5 --rate-limit-ms=250
 ```
 
 Check external links:
@@ -535,6 +535,24 @@ Save JSON report:
 ```bash
 php artisan lazy-seo:crawl https://example.com --output=storage/app/seo-report.json
 ```
+
+Crawler security defaults block private/reserved networks and manual redirects are validated before every follow-up request. Override only for trusted internal apps:
+
+```php
+'crawler' => [
+    'allow_private_networks' => false,
+    'allowed_hosts' => [],
+    'blocked_hosts' => [],
+    'max_depth' => 5,
+    'rate_limit_ms' => 250,
+    'respect_robots_txt' => true,
+    'queue_only' => false,
+    'max_redirects' => 5,
+    'max_body_kb' => 1024,
+],
+```
+
+For a strict production crawler, set `allowed_hosts` to your public domain list and enable `queue_only` for large/scheduled scans.
 
 ## SEO monitoring
 
@@ -952,3 +970,22 @@ Recommended setup:
 ## License
 
 MIT.
+
+## Security defaults
+
+Lazy SEO Tools keeps dangerous surfaces closed by default:
+
+- admin routes are disabled by default and require `web`, `auth`, and `can:manage-lazy-seo` when enabled;
+- API write routes are disabled by default and require `auth:sanctum` when enabled;
+- crawler blocks private/reserved networks by default to reduce SSRF risk;
+- crawler respects `robots.txt` by default and supports max depth, retries, rate limiting, and queue-only mode;
+- AI is disabled by default and requires an explicit token;
+- runtime config validation fails fast on unsafe route/crawler/AI settings.
+
+See [`docs/security.md`](docs/security.md).
+
+
+
+## Release safety
+
+Before tagging a beta or stable release, follow [`docs/release-checklist.md`](docs/release-checklist.md).

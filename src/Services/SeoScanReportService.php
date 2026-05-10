@@ -49,10 +49,10 @@ class SeoScanReportService
             ->groupBy('severity', 'status')
             ->orderBy('severity')
             ->get()
-            ->map(fn ($row): array => [
+            ->map(fn (SeoScanIssue $row): array => [
                 'severity' => (string) $row->severity,
                 'status' => (string) $row->status,
-                'count' => (int) $row->aggregate,
+                'count' => (int) $row->getAttribute('aggregate'),
             ])
             ->all();
     }
@@ -67,10 +67,10 @@ class SeoScanReportService
             ->orderByDesc('aggregate')
             ->limit(20)
             ->get()
-            ->map(fn ($row): array => [
+            ->map(fn (SeoScanIssue $row): array => [
                 'type' => (string) $row->type,
                 'severity' => (string) $row->severity,
-                'count' => (int) $row->aggregate,
+                'count' => (int) $row->getAttribute('aggregate'),
             ])
             ->all();
     }

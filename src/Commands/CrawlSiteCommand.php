@@ -11,6 +11,8 @@ class CrawlSiteCommand extends Command
     public $signature = 'lazy-seo:crawl
         {url : Start URL}
         {--max-pages= : Maximum pages to crawl}
+        {--max-depth= : Maximum internal link depth}
+        {--rate-limit-ms= : Delay between crawler HTTP requests in milliseconds}
         {--check-external : Check external links with HEAD/GET requests}
         {--max-external-links= : Maximum external links to check}
         {--output= : Optional JSON report path}';
@@ -19,8 +21,16 @@ class CrawlSiteCommand extends Command
 
     public function handle(SiteCrawlerService $crawler): int
     {
+        if ((bool) config('lazy-seo.crawler.queue_only', false)) {
+            $this->components->error('Synchronous crawling is disabled by lazy-seo.crawler.queue_only. Use lazy-seo:crawl-queue or lazy-seo:monitor --queue.');
+
+            return self::FAILURE;
+        }
+
         $result = $crawler->crawl($this->argument('url'), array_filter([
             'max_pages' => $this->option('max-pages') ? (int) $this->option('max-pages') : null,
+            'max_depth' => $this->option('max-depth') ? (int) $this->option('max-depth') : null,
+            'rate_limit_ms' => $this->option('rate-limit-ms') !== null ? (int) $this->option('rate-limit-ms') : null,
             'check_external_links' => $this->option('check-external') ? true : null,
             'max_external_links' => $this->option('max-external-links') ? (int) $this->option('max-external-links') : null,
         ], static fn ($value): bool => $value !== null));

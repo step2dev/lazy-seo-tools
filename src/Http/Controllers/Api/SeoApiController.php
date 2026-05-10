@@ -4,43 +4,56 @@ namespace Step2dev\LazySeoTools\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
+use Step2dev\LazySeoTools\Http\Resources\SeoResource;
 use Step2dev\LazySeoTools\Models\Seo;
 
 class SeoApiController extends Controller
 {
-    public function index()
+    public function index(Request $request): AnonymousResourceCollection
     {
-        return Seo::query()->latest()->paginate((int) request('per_page', 20));
+        $perPage = max(1, min(100, (int) $request->integer('per_page', 20)));
+
+        return SeoResource::collection(
+            Seo::query()->latest()->paginate($perPage)
+        );
     }
 
-    public function show(Seo $seo): Seo
+    public function show(Seo $seo): SeoResource
     {
-        return $seo;
+        return new SeoResource($seo);
     }
 
     public function store(Request $request): JsonResponse
     {
         $seo = Seo::query()->create($this->validated($request));
 
-        return response()->json($seo, 201);
+        return (new SeoResource($seo->refresh()))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function update(Request $request, Seo $seo): Seo
+    public function update(Request $request, Seo $seo): SeoResource
     {
         $seo->update($this->validated($request, partial: true));
 
-        return $seo->refresh();
+        return new SeoResource($seo->refresh());
     }
 
     public function destroy(Seo $seo): JsonResponse
     {
         $seo->delete();
 
-        return response()->json(['deleted' => true]);
+        return response()->json([
+            'data' => [
+                'deleted' => true,
+            ],
+        ]);
     }
 
+    /** @return array<string, mixed> */
     protected function validated(Request $request, bool $partial = false): array
     {
         $nullable = $partial ? 'sometimes' : 'nullable';

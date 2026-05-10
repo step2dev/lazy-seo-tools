@@ -53,7 +53,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Step2dev\\LazySeoTools\\Tests\\": "tests/"
+            "Step2dev\\LazySeoTools\\Tests\\": "tests/",
+            "Tests\\": "tests/Legacy/"
         }
     },
     "scripts": {
