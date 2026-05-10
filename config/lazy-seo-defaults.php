@@ -44,15 +44,16 @@ return [
         'api' => false,
         'api_prefix' => 'seo',
         'api_middleware' => ['api'],
-        'api_read_middleware' => [],
+        'api_read_middleware' => ['auth:sanctum'],
         'api_write_middleware' => ['auth:sanctum'],
         'api_allow_morph_binding' => false,
+        'api_allowed_seoable_types' => [],
     ],
 
     'redirects' => [
         'enabled' => true,
         'preserve_query' => true,
-        'regex_enabled' => true,
+        'regex_enabled' => false,
         'wildcard_enabled' => true,
         'cache_seconds' => 60,
         'allowed_status_codes' => [301, 302, 307, 308, 410],

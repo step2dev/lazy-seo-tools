@@ -18,9 +18,9 @@ class SeoResource extends JsonResource
         return [
             'id' => $seo->id,
             'url' => $seo->url,
-            'title' => $seo->title,
-            'description' => $seo->description,
-            'keywords' => $seo->keywords,
+            'title' => $this->translations($seo, 'title'),
+            'description' => $this->translations($seo, 'description'),
+            'keywords' => $this->translations($seo, 'keywords'),
             'canonical_url' => $seo->canonical_url,
             'robots' => $seo->robots,
             'indexable' => (bool) $seo->indexable,
@@ -29,5 +29,13 @@ class SeoResource extends JsonResource
             'created_at' => $seo->created_at?->toISOString(),
             'updated_at' => $seo->updated_at?->toISOString(),
         ];
+    }
+
+    /** @return array<string, mixed>|null */
+    private function translations(Seo $seo, string $field): ?array
+    {
+        $translations = $seo->getTranslations($field);
+
+        return $translations === [] ? null : $translations;
     }
 }

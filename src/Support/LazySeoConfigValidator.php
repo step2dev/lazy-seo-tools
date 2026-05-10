@@ -32,10 +32,19 @@ class LazySeoConfigValidator
         }
 
         if ((bool) config('lazy-seo.routes.api', false) && (bool) config('lazy-seo.features.api', true)) {
+            $readMiddleware = $this->middlewareList(config('lazy-seo.routes.api_read_middleware', []));
             $writeMiddleware = $this->middlewareList(config('lazy-seo.routes.api_write_middleware', []));
+
+            if (! $this->containsMiddleware($readMiddleware, ['auth', 'auth:', 'auth.', 'sanctum', 'passport'])) {
+                $this->fail('API read routes are enabled, but lazy-seo.routes.api_read_middleware does not contain auth middleware.');
+            }
 
             if (! $this->containsMiddleware($writeMiddleware, ['auth', 'auth:', 'auth.', 'sanctum', 'passport'])) {
                 $this->fail('API write routes are enabled, but lazy-seo.routes.api_write_middleware does not contain auth middleware.');
+            }
+
+            if ((bool) config('lazy-seo.routes.api_allow_morph_binding', false) && $this->middlewareList(config('lazy-seo.routes.api_allowed_seoable_types', [])) === []) {
+                $this->fail('API morph binding is enabled, but lazy-seo.routes.api_allowed_seoable_types is empty.');
             }
         }
     }

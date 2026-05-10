@@ -74,7 +74,12 @@ class SeoApiController extends Controller
         ];
 
         if ((bool) config('lazy-seo.routes.api_allow_morph_binding', false)) {
-            $rules['seoable_type'] = [$required, 'string', 'max:255'];
+            $allowedSeoableTypes = array_values(array_filter(
+                (array) config('lazy-seo.routes.api_allowed_seoable_types', []),
+                static fn (mixed $type): bool => is_string($type) && $type !== ''
+            ));
+
+            $rules['seoable_type'] = [$required, 'string', 'max:255', Rule::in($allowedSeoableTypes)];
             $rules['seoable_id'] = [$required, 'integer'];
         }
 

@@ -14,17 +14,17 @@ it('registers package livewire components when livewire is available', function 
         $this->markTestSkipped('Livewire is not installed.');
     }
 
-    expect(Livewire::test('lazy-seo-form'))->component->toBeInstanceOf(SeoForm::class)
-        ->and(Livewire::test('lazy-seo-analyzer'))->component->toBeInstanceOf(SeoAnalyzerLivewire::class)
-        ->and(Livewire::test('lazy-seo-redirect-table'))->component->toBeInstanceOf(RedirectTable::class)
-        ->and(Livewire::test('lazy-seo-monitoring-dashboard'))->component->toBeInstanceOf(SeoMonitoringDashboard::class)
-        ->and(Livewire::test('lazy-seo-issues-table'))->component->toBeInstanceOf(SeoIssuesTable::class);
+    expect(Livewire::test('lazy-seo-form')->instance())->toBeInstanceOf(SeoForm::class)
+        ->and(Livewire::test('lazy-seo-analyzer')->instance())->toBeInstanceOf(SeoAnalyzerLivewire::class)
+        ->and(Livewire::test('lazy-seo-redirect-table')->instance())->toBeInstanceOf(RedirectTable::class)
+        ->and(Livewire::test('lazy-seo-monitoring-dashboard')->instance())->toBeInstanceOf(SeoMonitoringDashboard::class)
+        ->and(Livewire::test('lazy-seo-issues-table')->instance())->toBeInstanceOf(SeoIssuesTable::class);
 
     $scan = SeoScan::query()->create([
         'url' => 'https://example.com',
         'status' => 'completed',
     ]);
 
-    expect(Livewire::test('lazy-seo-scan-detail', ['scan' => $scan]))->component
+    expect(Livewire::test('lazy-seo-scan-detail', ['scan' => $scan])->instance())
         ->toBeInstanceOf(SeoScanDetail::class);
 });

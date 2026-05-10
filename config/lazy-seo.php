@@ -54,9 +54,10 @@ return [
         'api' => env('LAZY_SEO_API_ROUTES', false),
         'api_prefix' => env('LAZY_SEO_API_PREFIX', 'seo'),
         'api_middleware' => ['api'],
-        'api_read_middleware' => [],
+        'api_read_middleware' => ['auth:sanctum'],
         'api_write_middleware' => ['auth:sanctum'],
         'api_allow_morph_binding' => false,
+        'api_allowed_seoable_types' => [],
     ],
 
     /*
@@ -75,6 +76,20 @@ return [
         'seo_scans' => 'seo_scans',
         'seo_scan_issues' => 'seo_scan_issues',
         'seo_indexing_logs' => 'seo_indexing_logs',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Redirects
+    |--------------------------------------------------------------------------
+    */
+    'redirects' => [
+        'enabled' => env('LAZY_SEO_REDIRECTS_ENABLED', true),
+        'preserve_query' => env('LAZY_SEO_REDIRECT_PRESERVE_QUERY', true),
+        'regex_enabled' => env('LAZY_SEO_REDIRECT_REGEX_ENABLED', false),
+        'wildcard_enabled' => env('LAZY_SEO_REDIRECT_WILDCARD_ENABLED', true),
+        'cache_seconds' => (int) env('LAZY_SEO_REDIRECT_CACHE_SECONDS', 60),
+        'allowed_status_codes' => [301, 302, 307, 308, 410],
     ],
 
     /*
