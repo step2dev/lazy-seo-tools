@@ -2,6 +2,7 @@
 
 namespace Step2dev\LazySeoTools\Tests;
 
+use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Step2dev\LazySeoTools\LazySeoServiceProvider;
 
@@ -11,8 +12,8 @@ abstract class TestCase extends Orchestra
     {
         $providers = [LazySeoServiceProvider::class];
 
-        if (class_exists(\Livewire\LivewireServiceProvider::class)) {
-            array_unshift($providers, \Livewire\LivewireServiceProvider::class);
+        if (class_exists(LivewireServiceProvider::class)) {
+            array_unshift($providers, LivewireServiceProvider::class);
         }
 
         return $providers;
