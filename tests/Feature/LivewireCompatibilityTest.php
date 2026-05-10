@@ -7,18 +7,24 @@ use Step2dev\LazySeoTools\Http\Livewire\SeoForm;
 use Step2dev\LazySeoTools\Http\Livewire\SeoIssuesTable;
 use Step2dev\LazySeoTools\Http\Livewire\SeoMonitoringDashboard;
 use Step2dev\LazySeoTools\Http\Livewire\SeoScanDetail;
+use Step2dev\LazySeoTools\Models\SeoScan;
 
 it('registers package livewire components when livewire is available', function (): void {
     if (! class_exists(Livewire::class)) {
         $this->markTestSkipped('Livewire is not installed.');
     }
 
-    $finder = app('livewire.finder');
+    expect(Livewire::test('lazy-seo-form'))->component->toBeInstanceOf(SeoForm::class)
+        ->and(Livewire::test('lazy-seo-analyzer'))->component->toBeInstanceOf(SeoAnalyzerLivewire::class)
+        ->and(Livewire::test('lazy-seo-redirect-table'))->component->toBeInstanceOf(RedirectTable::class)
+        ->and(Livewire::test('lazy-seo-monitoring-dashboard'))->component->toBeInstanceOf(SeoMonitoringDashboard::class)
+        ->and(Livewire::test('lazy-seo-issues-table'))->component->toBeInstanceOf(SeoIssuesTable::class);
 
-    expect($finder->getClass('lazy-seo-form'))->toBe(SeoForm::class)
-        ->and($finder->getClass('lazy-seo-analyzer'))->toBe(SeoAnalyzerLivewire::class)
-        ->and($finder->getClass('lazy-seo-redirect-table'))->toBe(RedirectTable::class)
-        ->and($finder->getClass('lazy-seo-monitoring-dashboard'))->toBe(SeoMonitoringDashboard::class)
-        ->and($finder->getClass('lazy-seo-issues-table'))->toBe(SeoIssuesTable::class)
-        ->and($finder->getClass('lazy-seo-scan-detail'))->toBe(SeoScanDetail::class);
+    $scan = SeoScan::query()->create([
+        'url' => 'https://example.com',
+        'status' => 'completed',
+    ]);
+
+    expect(Livewire::test('lazy-seo-scan-detail', ['scan' => $scan]))->component
+        ->toBeInstanceOf(SeoScanDetail::class);
 });

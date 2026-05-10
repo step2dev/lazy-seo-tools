@@ -17,9 +17,9 @@ it('stores seo records without allowing morph binding by default', function (): 
     ]);
 
     $response->assertCreated()
-        ->assertJsonPath('url', '/about')
-        ->assertJsonMissingPath('seoable_type')
-        ->assertJsonMissingPath('seoable_id');
+        ->assertJsonPath('data.url', '/about')
+        ->assertJsonMissingPath('data.seoable_type')
+        ->assertJsonMissingPath('data.seoable_id');
 
     expect(Seo::query()->first())
         ->seoable_type->toBeNull()
@@ -35,5 +35,5 @@ it('updates seo records partially', function (): void {
 
     $this->putJson('/seo/'.$seo->getKey(), [
         'title' => ['en' => 'New'],
-    ])->assertOk()->assertJsonPath('title.en', 'New');
+    ])->assertOk()->assertJsonPath('data.title.en', 'New');
 });

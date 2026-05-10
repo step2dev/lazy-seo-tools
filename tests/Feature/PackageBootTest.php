@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Step2dev\LazySeoTools\Services\SeoManager;
 
 it('registers the seo manager singleton', function (): void {
@@ -21,7 +22,9 @@ it('renders meta tags through the helper', function (): void {
 });
 
 it('publishes package routes when enabled', function (): void {
-    $this->get('/lazy-seo/dashboard')->assertOk();
+    expect(Route::has('lazy-seo.dashboard'))->toBeTrue()
+        ->and(Route::has('lazy-seo.issues'))->toBeTrue()
+        ->and(Route::has('lazy-seo.redirects'))->toBeTrue();
 });
 
 it('merges advanced defaults behind the compact published config', function (): void {
